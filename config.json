@@ -1,0 +1,10 @@
+{
+	"app_title" : "GistList",
+	"bundle_identifier" : "com.apptivus.gistlist",
+	"bundle_version" : "1.20 (1.2.0)",
+	"configuration" : "Release",
+    "scheme" : "gistlist",
+	"ipa_filename" : "GistList.ipa",
+    "s3_bucket_name" : "gistlist",
+	"s3_bucket_url" : "https://s3.amazonaws.com/gistlist/"
+}
