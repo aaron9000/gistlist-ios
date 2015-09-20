@@ -21,8 +21,8 @@ https://gist.github.com/aaron9000/3d3e0d82810970bfcd9c
 - [Objective Sugar](https://github.com/supermarin/objectivesugar)
 
 ###Made by [Apptivus](https://apptivus.com)
-- [Aaron Geisler](http://aarongeisler.com)
-- [Kris Zalameda](https://www.behance.net/Zalamedia)
+- Code: [Aaron Geisler](http://aarongeisler.com)
+- Design: [Kris Zalameda](https://www.behance.net/Zalamedia)
 
 ###Download the App
 [![alt text](http://gistlist.s3-website-us-east-1.amazonaws.com/btn-4.png)](http://itunes.com/apps/apptivus/gistlist)
