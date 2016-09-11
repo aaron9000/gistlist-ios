@@ -17,8 +17,9 @@ end
 
 def testing_pods
 	use_frameworks!
-    pod 'Quick'
-    pod 'Nimble'
+    pod 'Quick', '~> 0.9'
+    pod 'Nimble', '~> 4.0.0'
+    pod 'OCMock'
 end
 
 target 'gistlistTests' do

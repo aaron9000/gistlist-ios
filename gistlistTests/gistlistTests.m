@@ -1,16 +1,15 @@
-// Objective-C
-
+@import Nimble;
 #import <Quick/Quick.h>
 #import <Nimble/Nimble.h>
+#import "KeychainStorage.h"
+#import <OCMock/OCMock.h>
 
-QuickSpecBegin(DolphinSpec)
+QuickSpecBegin(KeychainStorageTests)
 
-it(@"is friendly", ^{
-    expect(@([[Dolphin new] isFriendly])).to(beTruthy());
+it(@"resets and has 0 stars", ^{
+    [KeychainStorage setStars:5];
+    expect(@(KeychainStorage.stars)).to(equal(@(5)));
 });
 
-it(@"is smart", ^{
-    expect(@([[Dolphin new] isSmart])).to(beTruthy());
-});
 
 QuickSpecEnd
