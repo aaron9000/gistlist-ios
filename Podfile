@@ -1,5 +1,5 @@
 platform :ios, '7.0'
-
+use_frameworks!
 inhibit_all_warnings!
 
 target "gistlist" do
@@ -8,6 +8,7 @@ target "gistlist" do
 	pod 'SSKeychain'
 	pod 'CrittercismSDK'
 	pod 'Mixpanel'
+	pod 'Nimble'
 	pod 'OctoKit', :podspec => 'Octokit.podspec.json'
 	pod 'SDWebImage', '~> 3.7'
 	pod 'iRate', '~> 1.11'
