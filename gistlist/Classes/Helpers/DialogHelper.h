@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <ReactiveCocoa.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 
 @interface DialogHelper : NSObject
 

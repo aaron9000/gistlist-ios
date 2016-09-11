@@ -45,23 +45,18 @@ DEPENDENCIES:
   - iRate (~> 1.11)
   - Mixpanel
   - ObjectiveSugar
-  - OctoKit (from `https://github.com/octokit/octokit.objc.git`, tag `0.7.6`)
+  - OctoKit (from `Octokit.podspec.json`)
   - SDWebImage (~> 3.7)
   - SSKeychain
   - SVProgressHUD (~> 1.1)
-  - VBFPopFlatButton (from `https://github.com/aaron9000/VBFPopFlatButton.git`, tag
-    `0.0.7`)
+  - VBFPopFlatButton (from `VBFPopFlatButton.podspec.json`)
   - WTAHelpers/WTAFrameHelpers (from `git@github.com:willowtreeapps/WTAHelpers.git`)
 
 EXTERNAL SOURCES:
   OctoKit:
-    :git: https://github.com/octokit/octokit.objc.git
     :podspec: Octokit.podspec.json
-    :tag: 0.7.6
   VBFPopFlatButton:
-    :git: https://github.com/aaron9000/VBFPopFlatButton.git
     :podspec: VBFPopFlatButton.podspec.json
-    :tag: 0.0.7
   WTAHelpers:
     :git: git@github.com:willowtreeapps/WTAHelpers.git
 
@@ -88,4 +83,6 @@ SPEC CHECKSUMS:
   VBFPopFlatButton: c764adf7a5e16a862c6644c7d6f876e030855387
   WTAHelpers: 293d44201fe3fac419d3f096e927faed3f74f432
 
-COCOAPODS: 0.36.3
+PODFILE CHECKSUM: 28ac8570dc951eb53ff10bd7da108f8076a5da8c
+
+COCOAPODS: 1.0.1

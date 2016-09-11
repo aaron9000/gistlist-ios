@@ -8,7 +8,7 @@
 
 #import "OCTClient+FetchDatedGist.h"
 #import <OCTGist.h>
-#import <ReactiveCocoa.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 #import <NSDateFormatter+OCTFormattingAdditions.h>
 #import <RACSignal+OCTClientAdditions.h>
 

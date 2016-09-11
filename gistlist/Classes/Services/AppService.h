@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <ReactiveCocoa.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 #import "RACSignal+Extensions.h"
 #import "TaskList.h"
 #import "Task.h"
