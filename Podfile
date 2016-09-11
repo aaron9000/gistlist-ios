@@ -1,18 +1,31 @@
-platform :ios, '7.0'
-use_frameworks!
+platform :ios, '8.0'
 inhibit_all_warnings!
 
-target "gistlist" do
+def app_pods
 	pod 'CocoaLumberjack'
 	pod 'ObjectiveSugar'
 	pod 'SSKeychain'
 	pod 'CrittercismSDK'
 	pod 'Mixpanel'
-	pod 'Nimble'
 	pod 'OctoKit', :podspec => 'Octokit.podspec.json'
 	pod 'SDWebImage', '~> 3.7'
 	pod 'iRate', '~> 1.11'
 	pod 'SVProgressHUD', '~> 1.1'
 	pod 'WTAHelpers/WTAFrameHelpers', :git => 'git@github.com:willowtreeapps/WTAHelpers.git'
 	pod 'VBFPopFlatButton', :podspec => 'VBFPopFlatButton.podspec.json'
+end
+
+def testing_pods
+	use_frameworks!
+    pod 'Quick'
+    pod 'Nimble'
+end
+
+target 'gistlistTests' do
+	app_pods
+    testing_pods
+end
+
+target "gistlist" do
+	app_pods
 end
