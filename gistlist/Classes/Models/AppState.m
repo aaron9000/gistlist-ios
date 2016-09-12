@@ -5,7 +5,6 @@
 #import "LocalStorage.h"
 #import "URLs.h"
 
-#warning could have a better name
 @implementation AppState
 
 #pragma mark - In-memory State
@@ -58,7 +57,7 @@ static NSInteger _pendingCompletedTasks;
 }
 
 + (void) setShowedTutorial:(BOOL) showedTutorial{
-    LocalData* newData = [LocalStorage.localData clone];
+    LocalData* newData = LocalStorage.localData.clone;
     newData.showedTutorial = showedTutorial;
     [LocalStorage setLocalData:newData];
 }

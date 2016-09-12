@@ -24,9 +24,9 @@
 }
 
 + (TaskList*) newTaskListFromOldTaskList:(TaskList*) oldTaskList{
-    NSArray* incompleteTasks = [[oldTaskList.tasks select:^BOOL(Task* task) {
+    NSArray* incompleteTasks = [oldTaskList.tasks select:^BOOL(Task* task) {
         return !task.completed;
-    }] mutableCopy];
+    }].mutableCopy;
     return [[TaskList alloc] initWithTasks:incompleteTasks lastUpdated:[NSDate date]];
 }
 
@@ -59,7 +59,7 @@
     return @{
                 kTasks: taskDictionaries,
                 kLastUpdated: _lastUpdated
-             };
+            };
 }
 
 - (id) initWithTasks:(NSArray*) tasks lastUpdated:(NSDate*) lastUpdated{

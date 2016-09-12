@@ -10,5 +10,6 @@
 + (Task*) taskFromLine:(NSString*) line;
 + (Task*) taskWithDescription:(NSString*) description isCompleted:(BOOL) completed;
 - (id) initWithDictionary:(NSDictionary*) dictionary;
+- (id) initWithDescription:(NSString*) description completed:(BOOL) completed;
 
 @end

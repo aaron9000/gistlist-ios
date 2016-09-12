@@ -10,4 +10,10 @@
 
 @implementation TestHelpers
 
++ (TaskList*) taskList{
+    Task* a = [Task taskWithDescription:@"foo" isCompleted:NO];
+    Task* b = [Task taskWithDescription:@"bar" isCompleted:YES];
+    return [[TaskList alloc] initWithTasks:@[a, b] lastUpdated:[NSDate date]];
+}
+
 @end

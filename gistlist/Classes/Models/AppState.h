@@ -4,7 +4,6 @@
 
 @interface AppState : NSObject
 
-#warning move me into a StateModifier class
 // Setters
 + (void) setPendingCompletedTasks:(NSInteger) tasks;
 + (void) setTaskList:(TaskList*) taskList;
