@@ -55,13 +55,13 @@ static BOOL _updateInProgress;
 #warning this seems kind of redundant
     RACSignal* retrieve = [GithubService retrieveGistsSince:DateHelper.oneWeekAgo];
     return [[retrieve flattenMap:^(NSMutableArray* gists) {
-        return [self synchronizeClientWithRemoteGist:[gists first]];
+        return [self syncClientWithRemoteGist:gists.first];
     }] doError:^(NSError *error) {
         DDLogError(@"failed to retrieve gists:\n %@", error);
     }];
 }
 
-+ (RACSignal*) synchronizeClientWithRemoteGist:(OCTGist*) mostRecentRemoteGist{
++ (RACSignal*) syncClientWithRemoteGist:(OCTGist*) mostRecentRemoteGist{
 
     // Locals
     TaskList* localTaskList = AppState.taskList;
@@ -187,10 +187,6 @@ static BOOL _updateInProgress;
     [AppState setTaskList:newTaskList];
     
     // Make sure we can make network calls
-    if (_updateInProgress){
-        _performAdditionalUpdate = YES;
-        return [RACSignal error:Errors.updateInProgress];
-    }
     if (AppState.userIsAuthenticated == NO){
         return [RACSignal error:Errors.notAuthenticated];
     }
@@ -199,6 +195,10 @@ static BOOL _updateInProgress;
     }
     if (AppState.gistToEdit == nil){
         return [RACSignal error:Errors.dataError];
+    }
+    if (_updateInProgress){
+        _performAdditionalUpdate = YES;
+        return [RACSignal error:Errors.updateInProgress];
     }
     
     // Make update call
@@ -302,6 +302,19 @@ static BOOL _updateInProgress;
     [taskList addTask:[Task taskWithDescription:text isCompleted:NO]];
     taskList.lastUpdated = [NSDate date];
     return [self persistTaskList:taskList];
+}
+
+#pragma mark - Misc methods
+
++ (RACSignal*) startTutorialWithDelay{
+    if (AppState.showedTutorial || AppState.taskCount > 0){
+        return [RACSignal return:@(NO)];
+    }
+    return [[RACSignal performBlock:^{
+        [AppState setShowedTutorial:YES];
+    } afterDelay:0.5f] flattenMap:^RACStream *(id value) {
+        return [RACSignal return:@(YES)];
+    }];
 }
 
 @end

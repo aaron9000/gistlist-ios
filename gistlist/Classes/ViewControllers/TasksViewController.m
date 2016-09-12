@@ -591,18 +591,15 @@ typedef enum InterfaceState {
 #pragma mark - Tutorial
 
 - (void) attemptStartTutorial{
-    
-    if (AppState.showedTutorial || AppState.taskCount > 0){
-        return;
-    }
-    localData.showedTutorial = YES;
-    [LocalStorage setLocalData:localData];
-    [self setButtonsEnabled:NO];
-    [NSObject performBlock:^{
+    [[AppService startTutorialWithDelay] subscribeNext:^(NSNumber* shouldPlay) {
+        if (!shouldPlay.boolValue){
+            return;
+        }
+        [self setButtonsEnabled:NO];
         [[DialogHelper showWelcomeAlert] subscribeNext:^(id x) {
             [self startTutorialSequence];
         }];
-    } afterDelay:0.5f];
+    }];
 }
 
 - (void) startTutorialSequence{

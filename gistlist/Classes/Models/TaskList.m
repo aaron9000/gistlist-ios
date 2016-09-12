@@ -1,4 +1,5 @@
 #import <ObjectiveSugar.h>
+#import "Helpers.h"
 #import "TaskList.h"
 
 @implementation TaskList
@@ -16,13 +17,9 @@
 
 + (TaskList*) taskListForContent:(NSString*) content lastUpdated:(NSDate*) lastUpdated{
     NSArray* lines = [content split:@"\n"];
-    NSMutableArray* tasks = [NSMutableArray array];
-    for (NSString* line in lines) {
-        Task* task = [Task taskFromLine:line];
-        if (task){
-            [tasks addObject:task];
-        }
-    }
+    NSArray* tasks = [lines map:^id(NSString* line) {
+        return [Task taskFromLine:line];
+    }];
     return [[TaskList alloc] initWithTasks:tasks lastUpdated:lastUpdated];
 }
 
@@ -34,9 +31,7 @@
 }
 
 - (BOOL) isEqualToList:(TaskList*) otherList{
-    NSString* otherContent = [otherList contentForTasks];
-    NSString* content = [self contentForTasks];
-    return [otherContent isEqualToString:content];
+    return [otherList.contentForTasks isEqualToString:self.contentForTasks];
 }
 
 - (id) initWithDictionary:(NSDictionary*) dictionary{
@@ -70,7 +65,7 @@
 - (id) initWithTasks:(NSArray*) tasks lastUpdated:(NSDate*) lastUpdated{
     self = [super init];
     if (self){
-        _tasks = [tasks mutableCopy];
+        _tasks = tasks.mutableCopy;
         _lastUpdated = lastUpdated;
     }
     return self;
@@ -79,8 +74,8 @@
 - (id) init{
     self = [super init];
     if (self){
-        _tasks = [NSMutableArray array];
-        _lastUpdated = [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f];
+        _tasks = NSMutableArray.array;
+        _lastUpdated = DateHelper.oneWeekAgo;
     }
     return self;
 }
@@ -99,20 +94,25 @@
 
 - (NSString*) contentForTasks{
     NSString* content = @"";
+#warning want reduce
     for (Task* task in _tasks) {
-        content = [content stringByAppendingString:[task stringValue]];
+        content = [content stringByAppendingString:task.stringValue];
     }
     return content;
 }
 
 #pragma mark - Modifying tasks
 
-- (void) addTask:(Task*) task{
+- (BOOL) addTask:(Task*) task{
+    if (!_tasks) {
+        return NO;
+    }
     [_tasks insertObject:task atIndex:0];
+    return YES;
 }
 
 - (BOOL) removeTaskAtIndex:(NSInteger) index{
-    if (index < 0 || index >= _tasks.count) {
+    if (!_tasks || index < 0 || index >= _tasks.count) {
         return NO;
     }
     [_tasks removeObjectAtIndex:index];

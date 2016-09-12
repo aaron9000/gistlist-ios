@@ -15,7 +15,7 @@
 
 // Modification of tasks
 - (BOOL) removeTaskAtIndex:(NSInteger) index;
-- (void) addTask:(Task*) task;
+- (BOOL) addTask:(Task*) task;
 
 // Construction and conversion
 + (TaskList*) taskListForContent:(NSString*) content;

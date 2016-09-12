@@ -6,12 +6,12 @@
 
 typedef enum {
     SyncResultFreshInstall,
-    SyncResultOffline,
-    SyncResultOfflineNewDay,
-    SyncResultOnlineUsingRemote,
-    SyncResultOnlineNewdayUsingRemote,
-    SyncResultOnlineUsingLocal,
-    SyncResultOnlineNewDayUsingLocal
+    SyncResultOfflineReuse,
+    SyncResultOfflineNew,
+    SyncResultOnlineReuseRemote,
+    SyncResultOnlineNewRemote,
+    SyncResultOnlineReuseLocal,
+    SyncResultOnlineNewLocal
 } SyncResult;
 
 @interface AppService : NSObject{
@@ -33,5 +33,8 @@ typedef enum {
 + (RACSignal*) deleteTask:(NSInteger) index;
 + (RACSignal*) toggleTask:(NSInteger) index;
 + (RACSignal*) addNewTaskWithText:(NSString*) text;
+
+// Misc
++ (RACSignal*) startTutorialWithDelay;
 
 @end
