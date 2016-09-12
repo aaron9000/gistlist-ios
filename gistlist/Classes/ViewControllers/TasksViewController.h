@@ -1,11 +1,3 @@
-//
-//  TasksViewController.h
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/13/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import <UIKit/UIKit.h>
 #import <AudioToolbox/AudioServices.h>
 #import <VBFPopFlatButton/VBFPopFlatButton.h>

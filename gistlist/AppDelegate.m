@@ -14,14 +14,12 @@
 #import <CocoaLumberjack.h>
 #import <SVProgressHUD.h>
 #import "LandingViewController.h"
+#import "AppState.h"
 #import "AppService.h"
-#import "NotificationHelper.h"
-#import "AnalyticsHelper.h"
-#import "LocalStorage.h"
-#import "InterfaceConsts.h"
-#import "TokensAndKeys.h"
+#import "Helpers.h"
+#import "Config.h"
 #import "GLTheme.h"
-#import "DialogHelper.h"
+#import "Extensions.h"
 
 @interface AppDelegate ()
 
@@ -112,9 +110,6 @@
     [_window addSubview:vc.view];
     [_window makeKeyAndVisible];
     
-    // Kick things off
-    [AppService start];
-    
     // Handle launching from a notification
     UILocalNotification *localNotification = launchOptions[UIApplicationLaunchOptionsLocalNotificationKey];
     if (localNotification) {
@@ -127,12 +122,23 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
-    RACSignal* sync = [AppService attemptSync];
-    sync = AppService.performedInitialSync ? [sync withLoadingSpinner] : sync;
-    [sync subscribeNext:^(id x) {
+    RACSignal* sync = AppState.performedInitialSync ?
+    [[AppService syncIfResuming] withLoadingSpinner] :
+    [AppService syncIfResuming];
+    [sync subscribeNext:^(NSNumber* completedTasks) {
+        [self attemptShowRewardToast:completedTasks.integerValue];
     } error:^(NSError *error) {
         [DialogHelper showSyncFailedToast];
     }];
+}
+
+- (void) attemptShowRewardToast:(int) tasks{
+    if (tasks == 0){
+        return;
+    }
+    [NSObject performBlock:^{
+        [DialogHelper showTaskCompletionToast:tasks];
+    } afterDelay:0.3f];
 }
 
 @end

@@ -1,15 +1,35 @@
-@import Nimble;
-#import <Quick/Quick.h>
-#import <Nimble/Nimble.h>
+#import "TestHelpers.h"
 #import "KeychainStorage.h"
-#import <OCMock/OCMock.h>
+
+
+#pragma mark - Helper Tests
+
+#pragma mark - Model Tests
+
+#pragma mark - Storage Tests
 
 QuickSpecBegin(KeychainStorageTests)
 
-it(@"resets and has 0 stars", ^{
-    [KeychainStorage setStars:5];
-    expect(@(KeychainStorage.stars)).to(equal(@(5)));
+it(@"loads and stores stars", ^{
+    
+    [KeychainStorage setCompletedTasks:5];
+    expect(@(KeychainStorage.completedTasks)).to(equal(@(5)));
+    
+    [KeychainStorage setCompletedTasks:1];
+    expect(@(KeychainStorage.completedTasks)).to(equal(@(1)));
 });
 
+it(@"loads and stores login credentials", ^{
+    
+    [KeychainStorage setToken:@"token" userLogin:@"login"];
+    expect(KeychainStorage.token).to(equal(@"token"));
+    expect(KeychainStorage.userLogin).to(equal(@"login"));
+    
+    [KeychainStorage setToken:@"a" userLogin:@"b"];
+    expect(KeychainStorage.token).to(equal(@"a"));
+    expect(KeychainStorage.userLogin).to(equal(@"b"));
+});
 
 QuickSpecEnd
+
+#pragma mark - Service Tests

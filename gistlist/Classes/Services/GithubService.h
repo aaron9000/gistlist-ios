@@ -20,7 +20,7 @@
 + (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth;
 + (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username;
 + (RACSignal*) createViralGist;
-+ (RACSignal*) retrieveUserInfo;
++ (RACSignal*) retrieveUserMetadata;
 + (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username;
 + (RACSignal*) retrieveGistWithRawUrl:(NSURL*) url;
 + (RACSignal*) retrieveGistsSince:(NSDate*) since;

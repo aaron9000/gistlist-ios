@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		07DAA3F81402C3C6D47E741B /* Pods_gistlistTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 749A92384E6B3CD20461081A /* Pods_gistlistTests.framework */; };
 		A51EF21D1D84EF24004812A7 /* SwiftSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */; };
+		A51EF2201D85FC4E004812A7 /* TestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A51EF21F1D85FC4E004812A7 /* TestHelpers.m */; };
 		A565C6501AC7A3980009815A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C64F1AC7A3980009815A /* main.m */; };
 		A565C6531AC7A3980009815A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C6521AC7A3980009815A /* AppDelegate.m */; };
 		A565C66A1AC7A3980009815A /* gistlistTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C6691AC7A3980009815A /* gistlistTests.m */; };
@@ -57,6 +58,8 @@
 		A5E9FEED1AE98AFF00DC6394 /* AnalyticsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A5E9FEEC1AE98AFF00DC6394 /* AnalyticsHelper.m */; };
 		A5E9FEF01AE98C3C00DC6394 /* LocalData.m in Sources */ = {isa = PBXBuildFile; fileRef = A5E9FEEF1AE98C3C00DC6394 /* LocalData.m */; };
 		A5E9FF301AEC09D600DC6394 /* MarkdownHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A5E9FF2F1AEC09D600DC6394 /* MarkdownHelper.m */; };
+		A5EEBFAF1D8610F20048C479 /* DateHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EEBFAE1D8610F20048C479 /* DateHelper.m */; };
+		A5EEBFB21D8621560048C479 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EEBFB11D8621560048C479 /* AppState.m */; };
 		A5EF71411BA55ACD00BBEBDF /* Errors.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EF71401BA55ACD00BBEBDF /* Errors.m */; };
 		C8228E01725102E18252D0E8 /* libPods-gistlist.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EAE52D2393A45AF328802F0 /* libPods-gistlist.a */; };
 /* End PBXBuildFile section */
@@ -78,6 +81,8 @@
 		749A92384E6B3CD20461081A /* Pods_gistlistTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_gistlistTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EAE52D2393A45AF328802F0 /* libPods-gistlist.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-gistlist.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftSpec.swift; sourceTree = "<group>"; };
+		A51EF21E1D85FC4E004812A7 /* TestHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestHelpers.h; sourceTree = "<group>"; };
+		A51EF21F1D85FC4E004812A7 /* TestHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestHelpers.m; sourceTree = "<group>"; };
 		A565C64A1AC7A3980009815A /* GistList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GistList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A565C64E1AC7A3980009815A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A565C64F1AC7A3980009815A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -164,6 +169,10 @@
 		A5E9FF2B1AEC069200DC6394 /* Macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Macros.h; sourceTree = "<group>"; };
 		A5E9FF2E1AEC09D600DC6394 /* MarkdownHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MarkdownHelper.h; path = Helpers/MarkdownHelper.h; sourceTree = "<group>"; };
 		A5E9FF2F1AEC09D600DC6394 /* MarkdownHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MarkdownHelper.m; path = Helpers/MarkdownHelper.m; sourceTree = "<group>"; };
+		A5EEBFAD1D8610F20048C479 /* DateHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DateHelper.h; path = Helpers/DateHelper.h; sourceTree = "<group>"; };
+		A5EEBFAE1D8610F20048C479 /* DateHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DateHelper.m; path = Helpers/DateHelper.m; sourceTree = "<group>"; };
+		A5EEBFB01D8621560048C479 /* AppState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
+		A5EEBFB11D8621560048C479 /* AppState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppState.m; sourceTree = "<group>"; };
 		A5EF713F1BA55ACD00BBEBDF /* Errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Errors.h; sourceTree = "<group>"; };
 		A5EF71401BA55ACD00BBEBDF /* Errors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Errors.m; sourceTree = "<group>"; };
 		A5EF71421BA55ADF00BBEBDF /* Notifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifications.h; path = Config/Notifications.h; sourceTree = "<group>"; };
@@ -258,6 +267,8 @@
 				A565C6691AC7A3980009815A /* gistlistTests.m */,
 				A565C6671AC7A3980009815A /* Supporting Files */,
 				A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */,
+				A51EF21E1D85FC4E004812A7 /* TestHelpers.h */,
+				A51EF21F1D85FC4E004812A7 /* TestHelpers.m */,
 			);
 			path = gistlistTests;
 			sourceTree = "<group>";
@@ -318,6 +329,8 @@
 				A565C7A11AC7AE3C0009815A /* Task.m */,
 				A565C7A21AC7AE3C0009815A /* TaskList.h */,
 				A565C7A31AC7AE3C0009815A /* TaskList.m */,
+				A5EEBFB01D8621560048C479 /* AppState.h */,
+				A5EEBFB11D8621560048C479 /* AppState.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -408,6 +421,8 @@
 				A5E9FF2E1AEC09D600DC6394 /* MarkdownHelper.h */,
 				A5E9FF2F1AEC09D600DC6394 /* MarkdownHelper.m */,
 				A598EDE51B07ED4900112AAE /* Helpers.h */,
+				A5EEBFAD1D8610F20048C479 /* DateHelper.h */,
+				A5EEBFAE1D8610F20048C479 /* DateHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -661,6 +676,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5EEBFB21D8621560048C479 /* AppState.m in Sources */,
 				A565C7C71AC7AE3C0009815A /* Task.m in Sources */,
 				A5E9FEED1AE98AFF00DC6394 /* AnalyticsHelper.m in Sources */,
 				A5E9FF301AEC09D600DC6394 /* MarkdownHelper.m in Sources */,
@@ -670,6 +686,7 @@
 				A57DBA1D1AD9B95D0092B623 /* DialogHelper.m in Sources */,
 				A5EF71411BA55ACD00BBEBDF /* Errors.m in Sources */,
 				A565C7C81AC7AE3C0009815A /* TaskList.m in Sources */,
+				A5EEBFAF1D8610F20048C479 /* DateHelper.m in Sources */,
 				A5E9FEF01AE98C3C00DC6394 /* LocalData.m in Sources */,
 				A565C7D01AC7AE3C0009815A /* LandingViewController.m in Sources */,
 				A565C7C91AC7AE3C0009815A /* KeychainStorage.m in Sources */,
@@ -697,6 +714,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A51EF21D1D84EF24004812A7 /* SwiftSpec.swift in Sources */,
+				A51EF2201D85FC4E004812A7 /* TestHelpers.m in Sources */,
 				A565C66A1AC7A3980009815A /* gistlistTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

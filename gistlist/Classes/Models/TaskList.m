@@ -1,11 +1,3 @@
-//
-//  GLTaskList.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/14/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import <ObjectiveSugar.h>
 #import "TaskList.h"
 
@@ -96,7 +88,7 @@
 #pragma mark - Getters
 
 - (Task*) taskAtIndex:(NSInteger) index{
-    return (index < 0 || index >= _tasks.count) ? nil : _tasks[index];
+    return (!_tasks || index < 0 || index >= _tasks.count) ? nil : _tasks[index];
 }
 
 - (NSInteger) completedTaskCount{

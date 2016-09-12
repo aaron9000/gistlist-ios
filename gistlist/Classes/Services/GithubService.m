@@ -9,7 +9,6 @@
 #import <CocoaLumberjack.h>
 #import <ObjectiveSugar.h>
 #import <AFNetworking.h>
-#import "TaskList.h"
 #import "MarkdownHelper.h"
 #import "GithubService.h"
 #import "KeychainStorage.h"
@@ -26,14 +25,12 @@
 #pragma mark - State
 
 static OCTClient* _client;
-static NSString* _cachedLogin;
 
 #pragma mark - Initialization
 
 + (void) initialize{
     [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
     _client = nil;
-    _cachedLogin = nil;
 }
 
 #pragma mark - Public
@@ -48,7 +45,6 @@ static NSString* _cachedLogin;
     if (savedToken.length > 0 && savedUserLogin.length > 0){
         OCTUser* user = [OCTUser userWithRawLogin:savedUserLogin server:OCTServer.dotComServer];
         _client = [OCTClient authenticatedClientWithUser:user token:savedToken];
-        _cachedLogin = savedUserLogin;
     }
     return [_client isAuthenticated];
 }
@@ -63,7 +59,6 @@ static NSString* _cachedLogin;
     return [[signal deliverOn:RACScheduler.mainThreadScheduler] doNext:^(OCTClient* authenticatedClient) {
         _client = authenticatedClient;
         [KeychainStorage setToken:_client.token userLogin:_client.user.rawLogin];
-        _cachedLogin = [KeychainStorage userLogin];
     }];
 }
 
@@ -135,7 +130,7 @@ static NSString* _cachedLogin;
     }];
 }
 
-+ (RACSignal*) retrieveUserInfo{
++ (RACSignal*) retrieveUserMetadata{
     RACSignal *request = [_client fetchUserInfo];
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
@@ -152,14 +147,13 @@ static NSString* _cachedLogin;
 + (void) invalidateCachedLogin{
     [KeychainStorage setToken:@"" userLogin:@""];
     _client = nil;
-    _cachedLogin = nil;
 }
 
 + (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
-    NSArray* filenames = [[gist files] allKeys];
+    NSArray* filenames = gist.files.allKeys;
     NSArray* filteredFilenames = [filenames select:^BOOL(NSString* filename) {
-        BOOL containsFileKey = [[filename lowercaseString] containsString:[[MarkdownHelper filenameKey] lowercaseString]];
-        BOOL containsViralKey = [filename containsString:[MarkdownHelper viralFilename]];
+        BOOL containsFileKey = [filename.lowercaseString containsString:MarkdownHelper.filenameKey.lowercaseString];
+        BOOL containsViralKey = [filename containsString:MarkdownHelper.viralFilename];
         return containsFileKey && !containsViralKey;
     }];
     return filteredFilenames.count > 0;

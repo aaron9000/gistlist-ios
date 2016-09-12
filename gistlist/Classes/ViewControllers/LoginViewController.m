@@ -39,10 +39,6 @@
 
 #pragma mark - View Helpers
 
-- (void) dismiss{
-    [self popViewController];
-}
-
 - (void) dismissKeyboard{
     [_usernameTextField resignFirstResponder];
     [_passwordTextField resignFirstResponder];
@@ -81,22 +77,22 @@
 
 - (void) attemptVerify{
     [AnalyticsHelper loginVerify];
-    [self attemptGitHubLogin];
+    [self attemptGitHubLoginOrVerify];
 }
 
 - (void) attemptSignIn{
     [AnalyticsHelper loginSignIn];
-    [self attemptGitHubLogin];
+    [self attemptGitHubLoginOrVerify];
 }
 
-- (void) showLogin:(BOOL) showLogin{
-    if (_showingLogin == showLogin){
+- (void) changeInterfaceState:(LoginInterfaceState) state{
+    if (_state == state){
         return;
     }
     [self dismissKeyboard];
-    _showingLogin = showLogin;
-    NSArray* leavingViews = showLogin ? [self authViews] : [self loginViews];
-    NSArray* enteringViews = !showLogin ? [self authViews] : [self loginViews];
+    _state = state;
+    NSArray* leavingViews = state == LoginInterfaceStateCredentials ? [self twoFactorViews] : [self credentialsViews];
+    NSArray* enteringViews = state == LoginInterfaceStateTwoFactor ? [self twoFactorViews] : [self credentialsViews];
     for (UIView* v in leavingViews) {
         [self translateOff:v];
     }
@@ -105,17 +101,16 @@
     }
 }
 
-- (void) attemptGitHubLogin{
+- (void) attemptGitHubLoginOrVerify{
     NSString* u = _usernameTextField.text;
     NSString* p = _passwordTextField.text;
-    NSString* a = _authTextField.text;
-    a = [a isEqualToString:@""] ? nil : a;
-    [[[AppService startSessionAndSyncWithUsername:u password:p auth:a] withLoadingSpinner] subscribeNext:^(id x) {
-        [self dismiss];
+    NSString* a = _authTextField.text;    
+    [[[AppService startOnlineSessionWithUsername:u password:p auth:a] withLoadingSpinner] subscribeNext:^(id x) {
+        [self popViewController];
     } error:^(NSError *error) {
         if (error.code == OCTClientErrorTwoFactorAuthenticationOneTimePasswordRequired){
-            if (_showingLogin){
-                [self showLogin:NO];
+            if (_state == LoginInterfaceStateTwoFactor){
+                [self changeInterfaceState:LoginInterfaceStateTwoFactor];
             }else{
                 [AnalyticsHelper loginFailure];
                 [[DialogHelper showAuthErrorAlert] subscribeNext:^(id x) {
@@ -129,22 +124,22 @@
                 [[DialogHelper showOKErrorAlert:error] subscribeNext:^(id x) {
                 }];
             }
-            [self showLogin:YES];
+            [self changeInterfaceState:LoginInterfaceStateCredentials];
         }
     }];
 }
 
 #pragma mark - View Setup
 
-- (NSArray*) loginViews{
+- (NSArray*) credentialsViews{
     return @[_loginLogo, _usernameTextField, _usernameLabel, _joinButton, _passwordTextField, _passwordLabel, _signInButton];
 }
 
-- (NSArray*) authViews{
+- (NSArray*) twoFactorViews{
     return @[_authLogo, _authTextField, _authLabel, _verifyButton];
 }
 
-- (void) setupLogin{
+- (void) setupCredentialsViews{
 
     const float verticalPadding = [self verticalPadding];
     const float startY = 110.0f;
@@ -180,7 +175,7 @@
     }];
 }
 
-- (void) setupAuth{
+- (void) setupTwoFactorViews{
     
     const float startY = 110.0f;
     
@@ -203,22 +198,21 @@
         [self attemptVerify];
     }];
     
-    for (UIView* v in [self authViews]) {
-        v.hidden = YES;
-    }
-    _showingLogin = YES;
+    [self changeInterfaceState:LoginInterfaceStateCredentials];
 }
 
 - (void) setup{
     
+    
+    
     self.view.backgroundColor = [GLTheme backgroundColorDefault];
     _closeButton = [self.view addCloseButton];
     [[_closeButton rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x) {
-        [self dismiss];
+        [self popViewController];
     }];
     
-    [self setupLogin];
-    [self setupAuth];
+    [self setupCredentialsViews];
+    [self setupTwoFactorViews];
     
     _tap = [[UITapGestureRecognizer alloc]
             initWithTarget:self

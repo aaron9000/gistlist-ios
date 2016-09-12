@@ -1,13 +1,4 @@
-//
-//  TokensAndKeys.h
-//  gistlist
-//
-//  Created by Aaron Geisler on 8/3/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
-
 
 #warning You will need to replace these with your own values
 

@@ -9,175 +9,51 @@
 #import <CocoaLumberjack.h>
 #import <SVProgressHUD.h>
 #import <ObjectiveSugar.h>
-#import "NSObject+Blocks.h"
 #import "AppService.h"
 #import "GithubService.h"
-#import "LocalStorage.h"
-#import "KeychainStorage.h"
-#import "Notifications.h"
+#import "AppState.h"
+#import "Config.h"
 #import "Errors.h"
-#import "DialogHelper.h"
+#import "Helpers.h"
+#import "Extensions.h"
 
 @implementation AppService
 
-#pragma mark - State
-
-static TaskList* _taskList;
-static OCTGist* _gistToEdit;
-static NSString* _userImageUrl;
-static NSString* _username;
-static BOOL _performedInitialSync;
 static BOOL _performAdditionalUpdate;
 static BOOL _updateInProgress;
-static NSInteger _pendingStars;
 
-#pragma mark - Getters
-
-+ (Task*) taskAtIndex:(NSInteger) index{
-    NSMutableArray* tasks = _taskList.tasks;
-    return index >= tasks.count ? nil : tasks[index];
-}
-
-+ (NSString*) taskDescriptionAtIndex:(NSInteger) index{
-    return [self taskAtIndex:index].taskDescription;
-}
-
-+ (BOOL) taskIsCompleteAtIndex:(NSInteger) index{
-    return [self taskAtIndex:index].completed;
-}
-
-+ (NSInteger) taskCount{
-    return _taskList.tasks.count;
-}
-
-+ (NSURL*) gistUrl{
-    return _gistToEdit.HTMLURL ? : [NSURL URLWithString:@"http://gist.github.com/"];
-}
-
-+ (NSString*) userImageUrl{
-    return _userImageUrl ? : @"";
-}
-
-+ (NSString*) username{
-    return [self userIsAuthenticated] ? _username : @"GistList";
-}
-
-#pragma mark - Stars
-
-+ (NSInteger) pendingStars{
-    return _pendingStars;
-}
-
-+ (void) incrementStars:(NSInteger) number{
-    NSInteger newStars = [KeychainStorage stars] + number;
-    [KeychainStorage setStars:newStars];
-    _pendingStars = number;
-}
-
-+ (void) attemptShowStarAward{
-    if (_pendingStars == 0){
-        return;
-    }
-    [NSObject performBlock:^{
-        [DialogHelper showTaskCompletionToast:_pendingStars];
-        _pendingStars = 0;
-    } afterDelay:0.3f];
-}
-
-#pragma mark - Sessions
-
-+ (void) start{
-    _taskList = [LocalStorage localData].taskList;
-}
-
-+ (void) signOut{
-    [GithubService invalidateCachedLogin];
-}
-
-+ (BOOL) performedInitialSync{
-    return _performedInitialSync;
-}
-
-+ (BOOL) hasStoredCreds{
-    NSString* savedToken = [KeychainStorage token];
-    NSString* savedUserLogin = [KeychainStorage userLogin];
-    return (savedToken.length > 0 && savedUserLogin.length > 0);
-}
-
-+ (BOOL) userIsAuthenticated{
-    return [GithubService userIsAuthenticated];
-}
-
-+ (RACSignal*) startOfflineSession{
-    [GithubService invalidateCachedLogin];
-    return [self sync:NO];
-}
-
-+ (RACSignal*) startSessionAndSyncWithStoredCreds{
-    if ([GithubService authenticateWithStoredCredentials]){
-        return [RACSignal zip:@[[self cacheUserMetadata], [self sync:YES]]];
-    }else{
-        DDLogError(@"failed to auth with stored credentials");
-        return [RACSignal error:Errors.authFailure];
-    }
-}
-
-+ (RACSignal*) startSessionAndSyncWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
-    return [[[GithubService authenticateUsername:user withPassword:password withAuth:auth] flattenMap:^(id x) {
-        return [RACSignal zip:@[[self sync:YES], [self cacheUserMetadata]]];
-    }] doError:^(NSError *error) {
-        DDLogError(@"auth failure:\n %@", error);
-        [GithubService invalidateCachedLogin];
-    }];
-}
-
-#pragma mark - Synchronization
-
-+ (RACSignal*) attemptSync {
-    return _performedInitialSync ? [self sync:[GithubService userIsAuthenticated]] : [RACSignal return:@{}];
-}
+#pragma mark - Sync Helpers
 
 + (RACSignal*) sync:(BOOL) online{
-    return [[(online ? [self onlineSync] : [self offlineSync]) doNext:^(id x) {
+    RACSignal* sync = online ? [self onlineSync] : [self offlineSync];
+    return [[sync flattenMap:^(id x) {
+        NSInteger pendingCompletedTasks = AppState.pendingCompletedTasks;
         [[NSNotificationCenter defaultCenter] postNotificationName:kGLEventSyncComplete object:nil];
-        [self attemptShowStarAward];
-        _performedInitialSync = YES;
+        [AppState setPerformedInitialSync:YES];
+        [AppState setPendingCompletedTasks:0];
+        return [RACSignal return:@(pendingCompletedTasks)];
     }] doError:^(NSError *error) {
         DDLogError(@"sync failure:\n %@", error);
     }];
 }
 
-#pragma mark - Data Flow Helpers
-
-+ (NSDate*) twelveAMToday{
-    NSDate *date = [NSDate date];
-    NSCalendar *calendar = [NSCalendar autoupdatingCurrentCalendar];
-    NSUInteger preservedComponents = (NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay);
-    date = [calendar dateFromComponents:[calendar components:preservedComponents fromDate:date]];
-    return date;
-}
-
-+ (NSDate*) oneWeekAgo{
-    return [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f];
-}
-
-#pragma mark - Data Flow - Online
+#pragma mark - Online sync helpers
 
 + (RACSignal*) cacheUserMetadata{
-    return [[[GithubService retrieveUserInfo] doNext:^(OCTUser* userInfo) {
-        _userImageUrl = userInfo.avatarURL.absoluteString;
-        _username = userInfo.name;
+    return [[[GithubService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
+        [AppState setUserName:userInfo.name andUserImageUrl:userInfo.avatarURL.absoluteString];
     }] doError:^(NSError *error) {
         DDLogError(@"cacheUserMetadata: error:\n %@", error);
     }];
 }
 
 + (RACSignal*) onlineSync{
-    if (![self userIsAuthenticated]){
+    if (!AppState.userIsAuthenticated){
         return [RACSignal error:Errors.notAuthenticated];
     }
     
-    RACSignal* retrieve = [GithubService retrieveGistsSince:[self oneWeekAgo]];
+#warning this seems kind of redundant
+    RACSignal* retrieve = [GithubService retrieveGistsSince:DateHelper.oneWeekAgo];
     return [[retrieve flattenMap:^(NSMutableArray* gists) {
         return [self synchronizeClientWithRemoteGist:[gists first]];
     }] doError:^(NSError *error) {
@@ -187,49 +63,56 @@ static NSInteger _pendingStars;
 
 + (RACSignal*) synchronizeClientWithRemoteGist:(OCTGist*) mostRecentRemoteGist{
 
-    // Reference dates
-    NSDate* twelveAMToday = [self twelveAMToday];
-    NSDate* lastLocalUpdate = [_taskList lastUpdated];
-    NSDate* remoteGistDate = [mostRecentRemoteGist creationDate];
-    BOOL remoteOlderThan24Hours = [twelveAMToday compare:remoteGistDate] == NSOrderedDescending;
-    BOOL localOlderThan24Hours = [twelveAMToday compare:lastLocalUpdate] == NSOrderedDescending;
+    // Locals
+    TaskList* localTaskList = AppState.taskList;
+    NSDate* localLastUpdated = localTaskList.lastUpdated;
+    NSDate* remoteLastUpdated = mostRecentRemoteGist.creationDate;
+    BOOL remoteOlderThan24Hours = [DateHelper isOlderThan24Hours:remoteLastUpdated];
+    BOOL localOlderThan24Hours = [DateHelper isOlderThan24Hours:localLastUpdated];
     
     // We dont have a "last updated" field on OCTGist for some reason, so we attempt to pull back gists more recent than the last local update
-    return [[GithubService retrieveGistsSince:lastLocalUpdate] flattenMap:^(NSMutableArray *gistsSinceLastLocalUpdate) {
-        OCTGist* gistMoreRecentThanLocal = [gistsSinceLastLocalUpdate firstObject];
-        if (gistMoreRecentThanLocal){
+    return [[GithubService retrieveGistsSince:localLastUpdated] flattenMap:^(NSMutableArray *gistsSinceLastLocalUpdate) {
+        
+        // Gist: new or reuse
+        // TaskList: remote gist, local
+        
+        OCTGist* remoteGistMoreRecentThanLocal = gistsSinceLastLocalUpdate.firstObject;
+        if (remoteGistMoreRecentThanLocal){
             // found a gist more recent than local tasklist
             if (remoteOlderThan24Hours){
                 // Remote gist is most recent, but older than 24 hours
-                return [self createTodaysGistAndConsumeGist:gistMoreRecentThanLocal isNewDay:YES];
+                return [self createTodaysGistAndConsumeGist:remoteGistMoreRecentThanLocal isNewDay:YES];
             }else{
                 // Remote gist is most recent, and good to use
-                return [self recycleAndConsumeGist:gistMoreRecentThanLocal];
+                return [self recycleAndConsumeGist:remoteGistMoreRecentThanLocal];
             }
         }else{
             // found no gists more recent than local tasklist
             if (mostRecentRemoteGist){
                 if (remoteOlderThan24Hours){
                     // remote gist is older than 24 hours, create today's gist with local copy
-                    return [self createTodaysGistAndConsumeTaskList:_taskList isNewDay:YES];
+                    return [self createTodaysGistAndConsumeTaskList:localTaskList isNewDay:YES];
                 }else{
                     // remote gist is still valid, update with more recent local data
-                    return [self recycleGist:mostRecentRemoteGist andConsumeTaskList:_taskList];
+                    return [self recycleGist:mostRecentRemoteGist andConsumeTaskList:localTaskList];
                 }
             }else{
                 // Local gist is most recent or found none on github, create today's gist with local copy
-                return [self createTodaysGistAndConsumeTaskList:_taskList isNewDay:localOlderThan24Hours];
+                return [self createTodaysGistAndConsumeTaskList:localTaskList isNewDay:localOlderThan24Hours];
             }
         }
     }];
 }
 
 + (RACSignal*) recycleGist:(OCTGist*)gist andConsumeTaskList:(TaskList*) tasklist{
-    _gistToEdit = gist;
-    _taskList = tasklist;
-    return [[[GithubService updateGist:_gistToEdit withContent:[tasklist contentForTasks] username:_username]
+//    [AppState setGistToEdit:gist]; Do we need this?
+    
+    [AppState setTaskList:tasklist];
+    NSString* username = AppState.username;
+    NSString* content = tasklist.contentForTasks;
+    return [[[GithubService updateGist:gist withContent:content username:username]
               doNext:^(OCTGist *updatedGist) {
-                  _gistToEdit = updatedGist;
+                  [AppState setGistToEdit:updatedGist];
               }]
              doError:^(NSError *error) {
                  DDLogError(@"update gist: error:\n %@", error);
@@ -237,18 +120,18 @@ static NSInteger _pendingStars;
 }
 
 + (RACSignal*) recycleAndConsumeGist:(OCTGist*) remoteCopy{
-    _gistToEdit = remoteCopy;
-    OCTGistFile* file = [[remoteCopy.files allValues] firstObject];
+    [AppState setGistToEdit:remoteCopy];
+    OCTGistFile* file = remoteCopy.files.allValues.firstObject;
     return [[[GithubService retrieveGistWithRawUrl:file.rawURL]
                               doNext:^(NSString *gistContent) {
-                                  _taskList = [TaskList taskListForContent:gistContent];
+                                  [AppState setTaskList:[TaskList taskListForContent:gistContent]];
                               }] doError:^(NSError *error) {
                                   DDLogError(@"recycleAndConsumeGist: failure: \n%@", error);
                               }];
 }
 
 + (RACSignal*) createTodaysGistAndConsumeGist:(OCTGist*) remoteCopy isNewDay:(BOOL) isNewDay{
-    OCTGistFile* file = [[remoteCopy.files allValues] firstObject];
+    OCTGistFile* file = remoteCopy.files.allValues.firstObject;
     return [[[GithubService retrieveGistWithRawUrl:file.rawURL]
                 flattenMap:^(NSString *gistContent) {
                     TaskList* taskList = [TaskList taskListForContent:gistContent];
@@ -260,108 +143,165 @@ static NSInteger _pendingStars;
 
 + (RACSignal*) createTodaysGistAndConsumeTaskList:(TaskList*) taskList isNewDay:(BOOL) isNewDay{
     if (isNewDay){
-        [self incrementStars:taskList.completedTaskCount];
-        _taskList = [TaskList newTaskListFromOldTaskList:taskList];
+        [AppState incrementCompletedTasks:taskList.completedTaskCount];
+        [AppState setTaskList:[TaskList newTaskListFromOldTaskList:taskList]];
     }else{
-        _taskList = taskList;
+        [AppState setTaskList:taskList];
     }
-    NSString* gistContent = [_taskList contentForTasks];
-    return [[[GithubService createGistWithContent:gistContent username:_username]
+    NSString* username = AppState.username;
+    NSString* gistContent = AppState.taskList.contentForTasks;
+    return [[[GithubService createGistWithContent:gistContent username:username]
             doNext:^(OCTGist *createdGist) {
-                _gistToEdit = createdGist;
+                [AppState setGistToEdit:createdGist];
             }] doError:^(NSError *error) {
                 DDLogError(@"createTodaysGistAndConsumeTaskList: failure: \n%@", error);
             }];
 }
 
-#pragma mark - Data Flow - Offline
+#pragma mark - Offline sync helpers
 
 + (RACSignal*) offlineSync{
-    LocalData* localData = [LocalStorage localData];
-    TaskList* savedTaskList = localData.taskList;
-    BOOL olderThan24Hours = [[self twelveAMToday] compare:savedTaskList.lastUpdated] == NSOrderedDescending;
+    TaskList* savedTaskList = AppState.taskList;
+    TaskList* newTaskList = nil;
+    BOOL olderThan24Hours = [DateHelper isOlderThan24Hours:savedTaskList.lastUpdated];
     if (olderThan24Hours){
-        [self incrementStars:savedTaskList.completedTaskCount];
-        _taskList = [TaskList newTaskListFromOldTaskList:savedTaskList];
+        [AppState incrementCompletedTasks:savedTaskList.completedTaskCount];
+        newTaskList = [TaskList newTaskListFromOldTaskList:savedTaskList];
     }else{
-        _taskList = savedTaskList ? : [TaskList taskListForContent:@""];
+        newTaskList = savedTaskList ? : [TaskList taskListForContent:@""];
     }
-    localData.taskList = _taskList;
-    [LocalStorage setLocalData:localData];
-    return [RACSignal return: nil];
+    [AppState setTaskList:newTaskList];
+    return [self doNothing];
 }
 
-#pragma mark - Task Management
+#pragma mark - Persistence helpers
 
-+ (RACSignal*) createViralGist{
-    return [GithubService createViralGist];
-}
-
-+ (RACSignal*) persistTaskList{
++ (RACSignal*) persistTaskList:(TaskList*) newTaskList{
     
-    // Do nothing if our list matches what's on disk
-    LocalData* localData = [LocalStorage localData];
-    if ([localData.taskList isEqualToList:_taskList]){
-        return [RACSignal return:nil];
+    // Do nothing if our list matches what's stored locally
+    if ([newTaskList isEqualToList:AppState.taskList]){
+        return [self doNothing];
     }
     
-    // Save locally
-    _taskList.lastUpdated = [NSDate date];
-    localData.taskList = _taskList;
-    [LocalStorage setLocalData:localData];
+    // Always persist locally
+    [AppState setTaskList:newTaskList];
     
     // Make sure we can make network calls
-    if (_performedInitialSync == NO){
-        return [RACSignal error:Errors.hasNotPerformedInitialSync];
-    }
-    if ([GithubService userIsAuthenticated] == NO){
-        return [RACSignal error:Errors.notAuthenticated];
-    }
-    if (_gistToEdit == nil){
-        return [RACSignal error:Errors.dataError];
-    }
     if (_updateInProgress){
         _performAdditionalUpdate = YES;
         return [RACSignal error:Errors.updateInProgress];
     }
+    if (AppState.userIsAuthenticated == NO){
+        return [RACSignal error:Errors.notAuthenticated];
+    }
+    if (AppState.performedInitialSync == NO){
+        return [RACSignal error:Errors.hasNotPerformedInitialSync];
+    }
+    if (AppState.gistToEdit == nil){
+        return [RACSignal error:Errors.dataError];
+    }
     
     // Make update call
     _updateInProgress = YES;
-    return [[[[GithubService updateGist:_gistToEdit withContent:[_taskList contentForTasks] username:_username]
+    NSString* content = [newTaskList contentForTasks];
+    OCTGist* gistToEdit = AppState.gistToEdit;
+    NSString* username = AppState.username;
+    return [[[[GithubService updateGist:gistToEdit withContent:content username:username]
              doNext:^(OCTGist *updatedGist) {
-                 _gistToEdit = updatedGist;
+                 [AppState setGistToEdit:updatedGist];
              }]
             doError:^(NSError *error) {
                 DDLogError(@"update gist: error:\n %@", error);
             }]
             doCompleted:^{
                 _updateInProgress = NO;
-                if (!_performAdditionalUpdate){
+                if (_performAdditionalUpdate){
                     _performAdditionalUpdate = NO;
-                    [self persistTaskList];
+                    [self persistTaskList:newTaskList];
                 }
             }];
 }
 
+#pragma mark - Public session methods
+
++ (RACSignal*) signOut{
+    [GithubService invalidateCachedLogin];
+    return [self doNothing];
+    
+}
+
++ (RACSignal*) startOfflineSession{
+    [GithubService invalidateCachedLogin];
+    return [self sync:NO];
+}
+
++ (RACSignal*) startOnlineSessionWithStoredCreds{
+    if ([GithubService authenticateWithStoredCredentials]){
+        return [RACSignal zip:@[[self cacheUserMetadata], [self sync:YES]]];
+    }else{
+        DDLogError(@"failed to auth with stored credentials");
+        return [RACSignal error:Errors.authFailure];
+    }
+}
+
++ (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
+    NSString* authOrNil = auth.length == 0 ? nil : auth;
+    return [[[GithubService authenticateUsername:user withPassword:password withAuth:authOrNil] flattenMap:^(id x) {
+        return [RACSignal zip:@[[self sync:YES], [self cacheUserMetadata]]];
+    }] doError:^(NSError *error) {
+        DDLogError(@"auth failure:\n %@", error);
+        [GithubService invalidateCachedLogin];
+    }];
+}
+
+#pragma mark - Public synchronization methods
+
++ (RACSignal*) doNothing{
+    return [RACSignal return:nil];
+}
+
++ (RACSignal*) syncIfResuming {
+    return AppState.performedInitialSync ?
+    [self sync:AppState.userIsAuthenticated] :
+    [self doNothing];
+}
+
+#pragma mark - Public task management methods
+
++ (RACSignal*) createViralGist{
+    return [[GithubService createViralGist] flattenMap:^RACStream *(id value) {
+        [AppState setSharedGist:YES];
+        return [self doNothing];
+    }];
+}
+
 + (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText{
-    [_taskList taskAtIndex:index].taskDescription = newText;
-    return [self persistTaskList];
+    TaskList* taskList = AppState.taskList;
+    [taskList taskAtIndex:index].taskDescription = newText;
+    taskList.lastUpdated = [NSDate date];
+    return [self persistTaskList:taskList];
 }
 
 + (RACSignal*) deleteTask:(NSInteger) index{
-    [_taskList removeTaskAtIndex:index];
-    return [self persistTaskList];
+    TaskList* taskList = AppState.taskList;
+    [taskList removeTaskAtIndex:index];
+    taskList.lastUpdated = [NSDate date];
+    return [self persistTaskList:taskList];
 }
 
 + (RACSignal*) toggleTask:(NSInteger) index{
-    Task* task = [_taskList taskAtIndex:index];
+    TaskList* taskList = AppState.taskList;
+    Task* task = [taskList taskAtIndex:index];
     task.completed = !task.completed;
-    return [self persistTaskList];
+    taskList.lastUpdated = [NSDate date];
+    return [self persistTaskList:taskList];
 }
 
 + (RACSignal*) addNewTaskWithText:(NSString*) text{
-    [_taskList addTask:[Task taskWithDescription:text isCompleted:NO]];
-    return [self persistTaskList];
+    TaskList* taskList = AppState.taskList;
+    [taskList addTask:[Task taskWithDescription:text isCompleted:NO]];
+    taskList.lastUpdated = [NSDate date];
+    return [self persistTaskList:taskList];
 }
 
 @end

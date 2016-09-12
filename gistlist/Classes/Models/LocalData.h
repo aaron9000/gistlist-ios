@@ -1,11 +1,3 @@
-//
-//  LocalSettings.h
-//  Blob
-//
-//  Created by Aaron Geisler on 3/18/13.
-//
-//
-
 #import <Foundation/Foundation.h>
 #import "TaskList.h"
 

@@ -10,10 +10,10 @@
 
 @interface KeychainStorage : NSObject
 
-+ (BOOL) shared;
-+ (void) setShared:(BOOL) shared;
-+ (NSInteger) stars;
-+ (void) setStars:(NSInteger) stars;
++ (BOOL) sharedGist;
++ (void) setSharedGist:(BOOL) sharedGist;
++ (NSInteger) completedTasks;
++ (void) setCompletedTasks:(NSInteger) completedTasks;
 + (NSString*) token;
 + (NSString*) userLogin;
 + (void) setToken:(NSString*) token userLogin:(NSString*) userLogin;

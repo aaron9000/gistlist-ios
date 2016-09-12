@@ -1,11 +1,3 @@
-//
-//  LocalSettings.m
-//  Blob
-//
-//  Created by Aaron Geisler on 3/18/13.
-//
-//
-
 #import "LocalData.h"
 
 #define kShowedTutorial @"ShowedTutorial"

@@ -7,6 +7,7 @@
 //
 
 #import <SVProgressHUD.h>
+#import "AppState.h"
 #import "AppDelegate.h"
 #import "MainMenuViewController.h"
 #import "TasksViewController.h"
@@ -28,8 +29,7 @@
 }
 
 - (void) showLogin{
-    LoginViewController* login = [[LoginViewController alloc] init];
-    [self pushViewController:login];
+    [self pushViewController:[[LoginViewController alloc] init]];
 }
 
 - (void) useOffline{
@@ -46,15 +46,15 @@
 
 - (void) attemptLoginWithStoredCreds{
     AppDelegate* appDelegate = (AppDelegate*)UIApplication.sharedApplication.delegate;
-    if ([AppService userIsAuthenticated]){
+    if (AppState.userIsAuthenticated){
         [appDelegate registerAndScheduleNotifications];
         [self showTasks];
         return;
     }
     
-    RACSignal* signal = [AppService hasStoredCreds] ?
-    [[AppService startSessionAndSyncWithStoredCreds] withLoadingSpinner] :
-    [AppService startSessionAndSyncWithStoredCreds];
+    RACSignal* signal = AppState.hasStoredCreds ?
+    [[AppService startOnlineSessionWithStoredCreds] withLoadingSpinner] :
+    [AppService startOnlineSessionWithStoredCreds];
     [signal subscribeNext:^(id x) {
         [appDelegate registerAndScheduleNotifications];
         [self showTasks];
