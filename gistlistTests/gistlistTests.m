@@ -138,7 +138,7 @@ QuickSpecBegin(GithubServiceTests)
 it(@"loads text from a valid gist raw url", ^{
     NSString* url = @"https://gist.githubusercontent.com/aaron9000/5571bec531688cecc69db2b7196d8566/raw/2e9267e70d53c1ca319c9a9bd85979e8079630e0/test.txt";
     __block NSString* content = nil;
-    [[GithubService retrieveGistContentFromUrl:[NSURL URLWithString:url]] subscribeNext:^(NSString* c) {
+    [[GithubService.sharedService retrieveGistContentFromUrl:[NSURL URLWithString:url]] subscribeNext:^(NSString* c) {
         content = c;
     }];
     expect(content).toEventually(equal(@"dolphin"));
@@ -153,7 +153,7 @@ it(@"does not sync on resume if we have not started a session", ^{
     __block id a = @(999);
     [AppState resetAllState];
     expect(@(AppState.performedInitialSync)).to(equal(@(NO)));
-    [[AppService syncIfResuming] subscribeNext:^(id x) {
+    [[AppService.sharedService syncIfResuming] subscribeNext:^(id x) {
         a = x;
     }];
     expect(a).toEventually(equal(@(-1)));
@@ -162,9 +162,9 @@ it(@"does not sync on resume if we have not started a session", ^{
 it(@"syncs on resume after starting an online session", ^{
     __block id a = @(999);
     [AppState resetAllState];
-    [[[AppService startOfflineSession] flattenMap:^RACStream *(id value) {
+    [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id value) {
         expect(@(AppState.performedInitialSync)).to(equal(@(YES)));
-        return [AppService syncIfResuming];
+        return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
         a = x;
     }];
@@ -179,10 +179,10 @@ it(@"offline sync restores tasks when tasklist is recent", ^{
     
     __block id a = @(999);
     __block id b = @(999);
-    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+    [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id x) {
         a = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
-        return [AppService syncIfResuming];
+        return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
         b = x;
     }];
@@ -198,16 +198,20 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
     
     __block id a = @(999);
     __block id b = @(999);
-    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+    [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id x) {
         a = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
-        return [AppService syncIfResuming];
+        return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
         b = x;
     }];
     expect(a).toEventually(equal(@(1)));
     expect(b).toEventually(equal(@(0)));
 });
+
+// TODO: see if we need the eventually syntax...
+// TODO: common setup for remote tests
+// TODO: service -> idiomatic obj c singletons
 
 it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
 //    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;

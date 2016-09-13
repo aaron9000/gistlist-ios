@@ -198,7 +198,7 @@ typedef enum InterfaceState {
 }
 
 - (void) updateTask:(NSInteger) index withText:(NSString*) newText{
-    [[AppService updateTask:index withText:newText] subscribeNext:^(id x) {
+    [[AppService.sharedService updateTask:index withText:newText] subscribeNext:^(id x) {
     }];
     [self updateInterface];
     [AnalyticsHelper taskModify];
@@ -209,7 +209,7 @@ typedef enum InterfaceState {
     if (task.completed){
         [DialogHelper showClearsDailyToast];
     }
-    [[AppService deleteTask:index] subscribeNext:^(id x) {
+    [[AppService.sharedService deleteTask:index] subscribeNext:^(id x) {
     }];
     [_collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]]];
     [self updateInterface];
@@ -217,14 +217,14 @@ typedef enum InterfaceState {
 }
 
 - (void) toggleTask:(NSInteger) index{
-    [[AppService toggleTask:index] subscribeNext:^(id x) {
+    [[AppService.sharedService toggleTask:index] subscribeNext:^(id x) {
     }];
     [self refreshTaskListCells];
     [AnalyticsHelper taskToggle];
 }
 
 - (void) addNewTaskWithText:(NSString*) text{
-    [[AppService addNewTaskWithText:text] subscribeNext:^(id x) {
+    [[AppService.sharedService addNewTaskWithText:text] subscribeNext:^(id x) {
     }];
     [_collectionView setContentOffset:CGPointZero animated:NO];
     [_collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]]];
@@ -591,7 +591,7 @@ typedef enum InterfaceState {
 #pragma mark - Tutorial
 
 - (void) attemptStartTutorial{
-    [[AppService startTutorialWithDelay] subscribeNext:^(NSNumber* shouldPlay) {
+    [[AppService.sharedService startTutorialWithDelay] subscribeNext:^(NSNumber* shouldPlay) {
         if (!shouldPlay.boolValue){
             return;
         }

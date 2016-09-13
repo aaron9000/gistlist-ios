@@ -26,20 +26,25 @@
 
 static OCTClient* _client;
 
-#pragma mark - Initialization
-
-+ (void) initialize{
-    [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
-    _client = nil;
++ (instancetype)sharedService
+{
+    static GithubService *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[GithubService alloc] init];
+        [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
+        _client = nil;
+    });
+    return sharedInstance;
 }
 
 #pragma mark - Public
 
-+ (BOOL) userIsAuthenticated{
+- (BOOL) userIsAuthenticated{
     return (BOOL)(_client != nil && [_client isAuthenticated]);
 }
 
-+ (RACSignal*) authenticateWithStoredCredentials{
+- (RACSignal*) authenticateWithStoredCredentials{
     NSString* savedToken = [KeychainStorage token];
     NSString* savedUserLogin = [KeychainStorage userLogin];
     if (savedToken.length > 0 && savedUserLogin.length > 0){
@@ -54,7 +59,7 @@ static OCTClient* _client;
     }
 }
 
-+ (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth{
+- (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth{
     if ([_client isAuthenticated]){
         return [RACSignal error:Errors.alreadyAuthenticated];
     }
@@ -67,7 +72,7 @@ static OCTClient* _client;
     }];
 }
 
-+ (RACSignal*) createViralGist{
+- (RACSignal*) createViralGist{
     
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
     gistFileEdit.filename = [MarkdownHelper viralFilename];
@@ -83,7 +88,7 @@ static OCTClient* _client;
 }
 
 
-+ (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username{
+- (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username{
     
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
     gistFileEdit.filename = [MarkdownHelper filenameForTodaysDate];
@@ -98,7 +103,7 @@ static OCTClient* _client;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username{
+- (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username{
     
     NSString* filename = [gist.files.allKeys firstObject];
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
@@ -113,7 +118,7 @@ static OCTClient* _client;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url{
+- (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url{
     return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
         NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
         NSOperationQueue *queue = [NSOperationQueue mainQueue];
@@ -135,12 +140,12 @@ static OCTClient* _client;
     }];
 }
 
-+ (RACSignal*) retrieveUserMetadata{
+- (RACSignal*) retrieveUserMetadata{
     RACSignal *request = [_client fetchUserInfo];
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since{
+- (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since{
     RACSignal *request = [_client fetchGistsUpdatedSince:since];
     return [[[request collect] map:^id(NSArray* gists) {
         return [self filterGists:gists].first;
@@ -149,13 +154,13 @@ static OCTClient* _client;
 
 #pragma mark - Helpers
 
-+ (RACSignal*) invalidateCachedLogin{
+- (RACSignal*) invalidateCachedLogin{
     [KeychainStorage setToken:@"" userLogin:@""];
     _client = nil;
     return [RACSignal return:@(YES)];
 }
 
-+ (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
+- (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
     NSArray* filenames = gist.files.allKeys;
     NSArray* filteredFilenames = [filenames select:^BOOL(NSString* filename) {
         BOOL containsFileKey = [filename.lowercaseString containsString:MarkdownHelper.filenameKey.lowercaseString];
@@ -165,7 +170,7 @@ static OCTClient* _client;
     return filteredFilenames.count > 0;
 }
 
-+ (NSMutableArray*) filterGists:(NSArray*) gists{
+- (NSMutableArray*) filterGists:(NSArray*) gists{
     
     // Keep only Gists with a relevant filename
     NSArray* filteredGists = [gists select:^BOOL(OCTGist* gist) {

@@ -22,9 +22,19 @@
 static BOOL _performAdditionalUpdate;
 static BOOL _updateInProgress;
 
++ (instancetype)sharedService
+{
+    static AppService *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[AppService alloc] init];
+    });
+    return sharedInstance;
+}
+
 #pragma mark - Sync Helpers
 
-+ (RACSignal*) sync:(BOOL) online{
+- (RACSignal*) sync:(BOOL) online{
     RACSignal* sync = online ? [self onlineSync] : [self offlineSync];
     return [[sync flattenMap:^(id x) {
         NSInteger pendingCompletedTasks = AppState.pendingCompletedTasks;
@@ -39,12 +49,12 @@ static BOOL _updateInProgress;
 
 #pragma mark - Online sync helpers
 
-+ (RACSignal*) onlineSync{
-    if (!AppState.userIsAuthenticated){
+- (RACSignal*) onlineSync{
+    if (!GithubService.sharedService.userIsAuthenticated){
         return [RACSignal error:Errors.notAuthenticated];
     }
     
-    RACSignal* retrieve = [GithubService retrieveMostRecentGistSince:DateHelper.oneMonthAgo];
+    RACSignal* retrieve = [GithubService.sharedService retrieveMostRecentGistSince:DateHelper.oneMonthAgo];
     return [[retrieve flattenMap:^(OCTGist* mostRecentRemoteGist) {
         TaskList* localTaskList = AppState.taskList;
         NSDate* localLastUpdated = localTaskList.lastUpdated;
@@ -53,7 +63,7 @@ static BOOL _updateInProgress;
         BOOL localOlderThan24Hours = [DateHelper isOlderThan24Hours:localLastUpdated];
         
         // We dont have a "last updated" field on OCTGist, so we pull back gists more recent than the last local update
-        return [[GithubService retrieveMostRecentGistSince:localLastUpdated] flattenMap:^(OCTGist* remoteGistMoreRecentThanLocal) {
+        return [[GithubService.sharedService retrieveMostRecentGistSince:localLastUpdated] flattenMap:^(OCTGist* remoteGistMoreRecentThanLocal) {
             if (remoteGistMoreRecentThanLocal){
                 return [self onlineSyncConsumeRemote:remoteGistMoreRecentThanLocal
                                      createNewGist:remoteOlderThan24Hours];
@@ -74,18 +84,18 @@ static BOOL _updateInProgress;
     }];
 }
 
-+ (RACSignal*) onlineSyncConsumeRemote:(OCTGist*) remoteGist
+- (RACSignal*) onlineSyncConsumeRemote:(OCTGist*) remoteGist
                      createNewGist:(BOOL) createNewGist{
     
     OCTGistFile* file = remoteGist.files.allValues.firstObject;
-    return [[[GithubService retrieveGistContentFromUrl:file.rawURL] flattenMap:^RACStream *(NSString* content) {
+    return [[[GithubService.sharedService retrieveGistContentFromUrl:file.rawURL] flattenMap:^RACStream *(NSString* content) {
         TaskList* list = [TaskList taskListForContent:content];
         TaskList* newList = createNewGist ? list : [TaskList newTaskListFromOldTaskList:list];
         NSString* newContent = newList.contentForTasks;
         [AppState setTaskList:newList];
         if (createNewGist){
             [AppState incrementCompletedTasks:list.completedTaskCount];
-            return [GithubService createGistWithContent:newContent username:AppState.username];
+            return [GithubService.sharedService createGistWithContent:newContent username:AppState.username];
         }else{
             return [RACSignal return:remoteGist];
         }
@@ -95,7 +105,7 @@ static BOOL _updateInProgress;
     }];
 }
 
-+ (RACSignal*) onlineSyncConsumeLocal:(TaskList*) taskList
+- (RACSignal*) onlineSyncConsumeLocal:(TaskList*) taskList
              mostRecentRemoteGist:(OCTGist*) mostRecentGist
                     createNewGist:(BOOL) createNewGist{
     
@@ -109,7 +119,7 @@ static BOOL _updateInProgress;
     RACSignal* gistSignal = nil;
     if (createNewGist){
         [AppState incrementCompletedTasks:taskList.completedTaskCount];
-        gistSignal = [GithubService createGistWithContent:newContent username:AppState.username];
+        gistSignal = [GithubService.sharedService createGistWithContent:newContent username:AppState.username];
     }else{
         gistSignal = [RACSignal return:mostRecentGist];
     }
@@ -121,7 +131,7 @@ static BOOL _updateInProgress;
 
 #pragma mark - Offline sync helpers
 
-+ (RACSignal*) offlineSync{
+- (RACSignal*) offlineSync{
     TaskList* savedTaskList = AppState.taskList;
     TaskList* newTaskList = nil;
     BOOL olderThan24Hours = [DateHelper isOlderThan24Hours:savedTaskList.lastUpdated];
@@ -132,23 +142,23 @@ static BOOL _updateInProgress;
         newTaskList = savedTaskList ? : [TaskList taskListForContent:@""];
     }
     [AppState setTaskList:newTaskList];
-    return [self doNothing];
+    return [RACSignal return:@(YES)];
 }
 
 #pragma mark - Persistence helpers
 
-+ (RACSignal*) persistTaskList:(TaskList*) newTaskList{
+- (RACSignal*) persistTaskList:(TaskList*) newTaskList{
     
     // Do nothing if our list matches what's stored locally
     if ([newTaskList isEqualToList:AppState.taskList]){
-        return [self doNothing];
+        return [RACSignal return:@(NO)];
     }
     
     // Always persist locally
     [AppState setTaskList:newTaskList];
     
     // Make sure we can make network calls
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         return [RACSignal error:Errors.notAuthenticated];
     }
     if (AppState.performedInitialSync == NO){
@@ -167,7 +177,7 @@ static BOOL _updateInProgress;
     NSString* content = [newTaskList contentForTasks];
     OCTGist* gistToEdit = AppState.gistToEdit;
     NSString* username = AppState.username;
-    return [[[[GithubService updateGist:gistToEdit withContent:content username:username]
+    return [[[[GithubService.sharedService updateGist:gistToEdit withContent:content username:username]
               flattenMap:^RACStream *(OCTGist* updatedGist) {
                   [AppState setGistToEdit:updatedGist];
                   return [RACSignal return:@(YES)];
@@ -186,12 +196,8 @@ static BOOL _updateInProgress;
 
 #pragma mark - Misc helpers
 
-+ (RACSignal*) doNothing{
-    return [RACSignal return:nil];
-}
-
-+ (RACSignal*) cacheUserMetadata{
-    return [[[GithubService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
+- (RACSignal*) cacheUserMetadata{
+    return [[[GithubService.sharedService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
         [AppState setUserName:userInfo.name andUserImageUrl:userInfo.avatarURL.absoluteString];
     }] doError:^(NSError *error) {
         DDLogError(@"cacheUserMetadata: error:\n %@", error);
@@ -200,69 +206,69 @@ static BOOL _updateInProgress;
 
 #pragma mark - Public session methods
 
-+ (RACSignal*) signOut{
-    return [GithubService invalidateCachedLogin];
+- (RACSignal*) signOut{
+    return [GithubService.sharedService invalidateCachedLogin];
 }
 
-+ (RACSignal*) startOfflineSession{
-    return [[GithubService invalidateCachedLogin] flattenMap:^RACStream *(id value) {
+- (RACSignal*) startOfflineSession{
+    return [[GithubService.sharedService invalidateCachedLogin] flattenMap:^RACStream *(id value) {
         return [self sync:NO];
     }];
 }
 
-+ (RACSignal*) startOnlineSessionWithStoredCreds{
-    return [[[GithubService authenticateWithStoredCredentials] flattenMap:^RACStream *(id value) {
+- (RACSignal*) startOnlineSessionWithStoredCreds{
+    return [[[GithubService.sharedService authenticateWithStoredCredentials] flattenMap:^RACStream *(id value) {
         return [self cacheUserMetadata];
     }] flattenMap:^RACStream *(id value) {
         return [self sync:YES];
     }];
 }
 
-+ (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
+- (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
     NSString* authOrNil = auth.length == 0 ? nil : auth;
-    return [[[[GithubService authenticateUsername:user withPassword:password withAuth:authOrNil] flattenMap:^(id x) {
+    return [[[[GithubService.sharedService authenticateUsername:user withPassword:password withAuth:authOrNil] flattenMap:^(id x) {
         return [self cacheUserMetadata];
     }] flattenMap:^RACStream *(id value) {
         return [self sync:YES];
     }] doError:^(NSError *error) {
         DDLogError(@"auth failure:\n %@", error);
-        [[GithubService invalidateCachedLogin] subscribeNext:^(id x) {
+        [[GithubService.sharedService invalidateCachedLogin] subscribeNext:^(id x) {
         }];
     }];
 }
 
 #pragma mark - Public synchronization methods
 
-+ (RACSignal*) syncIfResuming {
+- (RACSignal*) syncIfResuming {
     return AppState.performedInitialSync ?
-    [self sync:AppState.userIsAuthenticated] :
+    [self sync:GithubService.sharedService.userIsAuthenticated] :
     [RACSignal return:@(-1)];
 }
 
 #pragma mark - Public task management methods
 
-+ (RACSignal*) createViralGist{
-    return [[GithubService createViralGist] flattenMap:^RACStream *(id value) {
+- (RACSignal*) createViralGist{
+    return [[GithubService.sharedService createViralGist] flattenMap:^RACStream *(id value) {
         [AppState setSharedGist:YES];
         return [RACSignal return:@(YES)];
     }];
 }
 
-+ (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText{
+- (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText{
     TaskList* taskList = AppState.taskList;
     [taskList taskAtIndex:index].taskDescription = newText;
     taskList.lastUpdated = [NSDate date];
     return [self persistTaskList:taskList];
 }
 
-+ (RACSignal*) deleteTask:(NSInteger) index{
+- (RACSignal*) deleteTask:(NSInteger) index{
     TaskList* taskList = AppState.taskList;
     [taskList removeTaskAtIndex:index];
     taskList.lastUpdated = [NSDate date];
     return [self persistTaskList:taskList];
 }
 
-+ (RACSignal*) toggleTask:(NSInteger) index{
+- (RACSignal*) toggleTask:(NSInteger) index{
     TaskList* taskList = AppState.taskList;
     Task* task = [taskList taskAtIndex:index];
     task.completed = !task.completed;
@@ -270,7 +276,7 @@ static BOOL _updateInProgress;
     return [self persistTaskList:taskList];
 }
 
-+ (RACSignal*) addNewTaskWithText:(NSString*) text{
+- (RACSignal*) addNewTaskWithText:(NSString*) text{
     TaskList* taskList = AppState.taskList;
     [taskList addTask:[Task taskWithDescription:text isCompleted:NO]];
     taskList.lastUpdated = [NSDate date];
@@ -279,7 +285,7 @@ static BOOL _updateInProgress;
 
 #pragma mark - Public misc methods
 
-+ (RACSignal*) startTutorialWithDelay{
+- (RACSignal*) startTutorialWithDelay{
     if (AppState.showedTutorial || AppState.taskCount > 0){
         return [RACSignal return:@(NO)];
     }

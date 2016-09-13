@@ -13,6 +13,7 @@
 #import "TasksViewController.h"
 #import "LoginViewController.h"
 #import "AppService.h"
+#import "GithubService.h"
 #import "Helpers.h"
 #import "Macros.h"
 #import "Extensions.h"
@@ -34,7 +35,7 @@
 
 - (void) useOffline{
     [AnalyticsHelper mainMenuOffline];
-    [[AppService startOfflineSession] subscribeNext:^(id x) {
+    [[AppService.sharedService startOfflineSession] subscribeNext:^(id x) {
         [self showTasks];
     }];
 }
@@ -46,14 +47,14 @@
 
 - (void) attemptLoginWithStoredCreds{
     AppDelegate* appDelegate = (AppDelegate*)UIApplication.sharedApplication.delegate;
-    if (AppState.userIsAuthenticated){
+    if (GithubService.sharedService.userIsAuthenticated){
         [appDelegate registerAndScheduleNotifications];
         [self showTasks];
         return;
     }
     
     if (AppState.hasStoredCreds){
-        [[[AppService startOnlineSessionWithStoredCreds] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
+        [[[AppService.sharedService startOnlineSessionWithStoredCreds] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
             [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
             [appDelegate registerAndScheduleNotifications];
             [self showTasks];

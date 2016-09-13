@@ -98,7 +98,7 @@
 #pragma mark - Button Callbacks
 
 - (void) copyUrl{
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
@@ -110,7 +110,7 @@
 }
 
 - (void) shareSMS{
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
@@ -134,7 +134,7 @@
 }
 
 - (void) shareEmail{
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
@@ -152,7 +152,7 @@
 }
 
 - (void) viewOnGithub{
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
@@ -165,19 +165,17 @@
 }
 
 - (void) promoteGistList{
-    if (AppState.userIsAuthenticated == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
-    if (AppState.userIsAuthenticated){
-        if (AppState.sharedGist == NO){
-            [[[[AppService createViralGist] withLoadingSpinner] withErrorAlert] subscribeNext:^(id x) {
-                [AnalyticsHelper createViralGist];
-                [DialogHelper showThankYouToast];
-            }];
-        }else{
-            [DialogHelper showThankYouAgainToast];
-        }
+    if (AppState.sharedGist == NO){
+        [[[[AppService.sharedService createViralGist] withLoadingSpinner] withErrorAlert] subscribeNext:^(id x) {
+            [AnalyticsHelper createViralGist];
+            [DialogHelper showThankYouToast];
+        }];
+    }else{
+        [DialogHelper showThankYouAgainToast];
     }
 }
 
@@ -191,7 +189,7 @@
 }
 
 - (void) signOut{
-    [[AppService signOut] subscribeNext:^(id x) {
+    [[AppService.sharedService signOut] subscribeNext:^(id x) {
         [AnalyticsHelper settingsSignOut];
         [self popToRootViewController];
     }];
@@ -240,7 +238,7 @@
     _profileImage.layer.cornerRadius = profileFrame.size.width * 0.5f;
     _profileImage.alpha = 0.0f;
     _profileImage.backgroundColor = [GLTheme buttonColorGreen];
-    if (GithubService.userIsAuthenticated){
+    if (GithubService.sharedService.userIsAuthenticated){
         [[SDWebImageDownloader sharedDownloader] downloadImageWithURL:[NSURL URLWithString:pictureUrl]
                                                               options:SDWebImageDownloaderUseNSURLCache
                                                              progress:^(NSInteger receivedSize, NSInteger expectedSize) {
@@ -308,7 +306,7 @@
     
     // Add buttons
     _buttons = [NSMutableArray array];
-    BOOL offline = ![GithubService userIsAuthenticated];
+    BOOL offline = !GithubService.sharedService.userIsAuthenticated;
     [[self addButtonWithTitle:@"View on GitHub" isLast:NO isGray:offline] subscribeNext:^(id x) {
         [self viewOnGithub];
     }];

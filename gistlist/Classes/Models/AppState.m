@@ -1,6 +1,5 @@
 #import "AppState.h"
 
-#import "GithubService.h"
 #import "KeychainStorage.h"
 #import "LocalStorage.h"
 #import "URLs.h"
@@ -121,10 +120,6 @@ static NSInteger _pendingCompletedTasks;
 
 + (NSString*) username{
     return _username ? : @"GistList";
-}
-
-+ (BOOL) userIsAuthenticated{
-    return GithubService.userIsAuthenticated;
 }
 
 + (BOOL) hasStoredCreds{

@@ -9,22 +9,24 @@
 }
 
 // Sessions
-+ (RACSignal*) signOut;
-+ (RACSignal*) startOfflineSession;
-+ (RACSignal*) startOnlineSessionWithStoredCreds;
-+ (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth;
+- (RACSignal*) signOut;
+- (RACSignal*) startOfflineSession;
+- (RACSignal*) startOnlineSessionWithStoredCreds;
+- (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth;
 
 // Synchronization
-+ (RACSignal*) syncIfResuming;
+- (RACSignal*) syncIfResuming;
 
 // Task Mangement & synchronization
-+ (RACSignal*) createViralGist;
-+ (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText;
-+ (RACSignal*) deleteTask:(NSInteger) index;
-+ (RACSignal*) toggleTask:(NSInteger) index;
-+ (RACSignal*) addNewTaskWithText:(NSString*) text;
+- (RACSignal*) createViralGist;
+- (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText;
+- (RACSignal*) deleteTask:(NSInteger) index;
+- (RACSignal*) toggleTask:(NSInteger) index;
+- (RACSignal*) addNewTaskWithText:(NSString*) text;
 
 // Misc
-+ (RACSignal*) startTutorialWithDelay;
+- (RACSignal*) startTutorialWithDelay;
+
++ (instancetype)sharedService;
 
 @end

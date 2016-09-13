@@ -28,7 +28,6 @@
 
 // Authentication & user getter
 + (BOOL) hasStoredCreds;
-+ (BOOL) userIsAuthenticated;
 + (NSString*) userImageUrl;
 + (NSString*) username;
 

@@ -123,8 +123,8 @@
 {
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     RACSignal* sync = AppState.performedInitialSync ?
-    [[AppService syncIfResuming] withLoadingSpinner] :
-    [AppService syncIfResuming];
+    [[AppService.sharedService syncIfResuming] withLoadingSpinner] :
+    [AppService.sharedService syncIfResuming];
     [sync subscribeNext:^(NSNumber* completedTasks) {
         [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
     } error:^(NSError *error) {

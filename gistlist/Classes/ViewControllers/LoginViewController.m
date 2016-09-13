@@ -105,7 +105,7 @@
     NSString* u = _usernameTextField.text;
     NSString* p = _passwordTextField.text;
     NSString* a = _authTextField.text;    
-    [[[AppService startOnlineSessionWithUsername:u password:p auth:a] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
+    [[[AppService.sharedService startOnlineSessionWithUsername:u password:p auth:a] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
         [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
         [self popViewController];
     } error:^(NSError *error) {
