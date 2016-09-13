@@ -11,6 +11,7 @@ def app_pods
 	pod 'SDWebImage', '~> 3.7'
 	pod 'iRate', '~> 1.11'
 	pod 'SVProgressHUD', '~> 1.1'
+	pod 'ISO8601DateFormatter', '~> 0.7'
 	pod 'WTAHelpers/WTAFrameHelpers', :git => 'git@github.com:willowtreeapps/WTAHelpers.git'
 	pod 'VBFPopFlatButton', :podspec => 'VBFPopFlatButton.podspec.json'
 end

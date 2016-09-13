@@ -4,16 +4,6 @@
 #import "TaskList.h"
 #import "Task.h"
 
-typedef enum {
-    SyncResultFreshInstall,
-    SyncResultOfflineReuse,
-    SyncResultOfflineNew,
-    SyncResultOnlineReuseRemote,
-    SyncResultOnlineNewRemote,
-    SyncResultOnlineReuseLocal,
-    SyncResultOnlineNewLocal
-} SyncResult;
-
 @interface AppService : NSObject{
 
 }

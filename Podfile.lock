@@ -46,6 +46,7 @@ DEPENDENCIES:
   - CocoaLumberjack
   - CrittercismSDK
   - iRate (~> 1.11)
+  - ISO8601DateFormatter (~> 0.7)
   - Mixpanel
   - Nimble (~> 4.0.0)
   - ObjectiveSugar
@@ -92,6 +93,6 @@ SPEC CHECKSUMS:
   VBFPopFlatButton: c764adf7a5e16a862c6644c7d6f876e030855387
   WTAHelpers: 293d44201fe3fac419d3f096e927faed3f74f432
 
-PODFILE CHECKSUM: 1c8f1881fc4bd4441a026c6b7b9c62f9044b05c3
+PODFILE CHECKSUM: 3641bbd416b991715e16b41d8310c111231a6092
 
 COCOAPODS: 1.0.1

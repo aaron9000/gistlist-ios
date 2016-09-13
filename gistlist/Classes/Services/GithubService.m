@@ -108,7 +108,7 @@ static OCTClient* _client;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveGistWithRawUrl:(NSURL*) url{
++ (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url{
     return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
         NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
         NSOperationQueue *queue = [NSOperationQueue mainQueue];
@@ -135,10 +135,10 @@ static OCTClient* _client;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveGistsSince:(NSDate*) since{
++ (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since{
     RACSignal *request = [_client fetchGistsUpdatedSince:since];
     return [[[request collect] map:^id(NSArray* gists) {
-        return [self filterGists:gists];
+        return [self filterGists:gists].first;
     }] deliverOn:RACScheduler.mainThreadScheduler];
 }
 

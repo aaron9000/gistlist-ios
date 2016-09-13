@@ -53,8 +53,8 @@
 }
 
 - (NSDictionary*) dictionaryValue{
-    NSArray* taskDictionaries = [_tasks map:^id(id object) {
-        return [object dictionaryValue];
+    NSArray* taskDictionaries = [_tasks map:^id(Task* task) {
+        return task.dictionaryValue;
     }];
     return @{
                 kTasks: taskDictionaries,

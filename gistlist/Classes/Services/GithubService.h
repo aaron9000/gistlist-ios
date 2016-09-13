@@ -22,7 +22,7 @@
 + (RACSignal*) createViralGist;
 + (RACSignal*) retrieveUserMetadata;
 + (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username;
-+ (RACSignal*) retrieveGistWithRawUrl:(NSURL*) url;
-+ (RACSignal*) retrieveGistsSince:(NSDate*) since;
++ (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url;
++ (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since;
 
 @end

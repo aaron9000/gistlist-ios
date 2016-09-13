@@ -39,123 +39,84 @@ static BOOL _updateInProgress;
 
 #pragma mark - Online sync helpers
 
-+ (RACSignal*) cacheUserMetadata{
-    return [[[GithubService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
-        [AppState setUserName:userInfo.name andUserImageUrl:userInfo.avatarURL.absoluteString];
-    }] doError:^(NSError *error) {
-        DDLogError(@"cacheUserMetadata: error:\n %@", error);
-    }];
-}
-
 + (RACSignal*) onlineSync{
     if (!AppState.userIsAuthenticated){
         return [RACSignal error:Errors.notAuthenticated];
     }
     
-#warning this seems kind of redundant
-    RACSignal* retrieve = [GithubService retrieveGistsSince:DateHelper.oneWeekAgo];
-    return [[retrieve flattenMap:^(NSMutableArray* gists) {
-        return [self syncClientWithRemoteGist:gists.first];
-    }] doError:^(NSError *error) {
-        DDLogError(@"failed to retrieve gists:\n %@", error);
-    }];
-}
-
-+ (RACSignal*) syncClientWithRemoteGist:(OCTGist*) mostRecentRemoteGist{
-
-    // Locals
-    TaskList* localTaskList = AppState.taskList;
-    NSDate* localLastUpdated = localTaskList.lastUpdated;
-    NSDate* remoteLastUpdated = mostRecentRemoteGist.creationDate;
-    BOOL remoteOlderThan24Hours = [DateHelper isOlderThan24Hours:remoteLastUpdated];
-    BOOL localOlderThan24Hours = [DateHelper isOlderThan24Hours:localLastUpdated];
-    
-    // We dont have a "last updated" field on OCTGist for some reason, so we attempt to pull back gists more recent than the last local update
-    return [[GithubService retrieveGistsSince:localLastUpdated] flattenMap:^(NSMutableArray *gistsSinceLastLocalUpdate) {
+    RACSignal* retrieve = [GithubService retrieveMostRecentGistSince:DateHelper.oneWeekAgo];
+    return [[retrieve flattenMap:^(OCTGist* mostRecentRemoteGist) {
+        TaskList* localTaskList = AppState.taskList;
+        NSDate* localLastUpdated = localTaskList.lastUpdated;
+        NSDate* remoteLastUpdated = mostRecentRemoteGist.creationDate;
+        BOOL remoteOlderThan24Hours = [DateHelper isOlderThan24Hours:remoteLastUpdated];
+        BOOL localOlderThan24Hours = [DateHelper isOlderThan24Hours:localLastUpdated];
         
-        // Gist: new or reuse
-        // TaskList: remote gist, local
-        
-        OCTGist* remoteGistMoreRecentThanLocal = gistsSinceLastLocalUpdate.firstObject;
-        if (remoteGistMoreRecentThanLocal){
-            // found a gist more recent than local tasklist
-            if (remoteOlderThan24Hours){
-                // Remote gist is most recent, but older than 24 hours
-                return [self createTodaysGistAndConsumeGist:remoteGistMoreRecentThanLocal isNewDay:YES];
+        // We dont have a "last updated" field on OCTGist, so we pull back gists more recent than the last local update
+        return [[GithubService retrieveMostRecentGistSince:localLastUpdated] flattenMap:^(OCTGist* remoteGistMoreRecentThanLocal) {
+            if (remoteGistMoreRecentThanLocal){
+                return [self onlineSyncConsumeRemote:remoteGistMoreRecentThanLocal
+                                     createNewGist:remoteOlderThan24Hours];
             }else{
-                // Remote gist is most recent, and good to use
-                return [self recycleAndConsumeGist:remoteGistMoreRecentThanLocal];
-            }
-        }else{
-            // found no gists more recent than local tasklist
-            if (mostRecentRemoteGist){
-                if (remoteOlderThan24Hours){
-                    // remote gist is older than 24 hours, create today's gist with local copy
-                    return [self createTodaysGistAndConsumeTaskList:localTaskList isNewDay:YES];
+                if (mostRecentRemoteGist){
+                    return [self onlineSyncConsumeLocal:localTaskList
+                                 mostRecentRemoteGist:mostRecentRemoteGist
+                                        createNewGist:remoteOlderThan24Hours];
                 }else{
-                    // remote gist is still valid, update with more recent local data
-                    return [self recycleGist:mostRecentRemoteGist andConsumeTaskList:localTaskList];
+                    return [self onlineSyncConsumeLocal:localTaskList
+                                 mostRecentRemoteGist:nil
+                                        createNewGist:localOlderThan24Hours];
                 }
-            }else{
-                // Local gist is most recent or found none on github, create today's gist with local copy
-                return [self createTodaysGistAndConsumeTaskList:localTaskList isNewDay:localOlderThan24Hours];
             }
-        }
+        }];
+    }] doError:^(NSError *error) {
+        DDLogError(@"failed to retrieve gist:\n %@", error);
     }];
 }
 
-+ (RACSignal*) recycleGist:(OCTGist*)gist andConsumeTaskList:(TaskList*) tasklist{
-//    [AppState setGistToEdit:gist]; Do we need this?
++ (RACSignal*) onlineSyncConsumeRemote:(OCTGist*) remoteGist
+                     createNewGist:(BOOL) createNewGist{
     
-    [AppState setTaskList:tasklist];
-    NSString* username = AppState.username;
-    NSString* content = tasklist.contentForTasks;
-    return [[[GithubService updateGist:gist withContent:content username:username]
-              doNext:^(OCTGist *updatedGist) {
-                  [AppState setGistToEdit:updatedGist];
-              }]
-             doError:^(NSError *error) {
-                 DDLogError(@"update gist: error:\n %@", error);
-             }];
+    OCTGistFile* file = remoteGist.files.allValues.firstObject;
+    return [[[GithubService retrieveGistContentFromUrl:file.rawURL] flattenMap:^RACStream *(NSString* content) {
+        TaskList* list = [TaskList taskListForContent:content];
+        TaskList* newList = createNewGist ? list : [TaskList newTaskListFromOldTaskList:list];
+        NSString* newContent = newList.contentForTasks;
+        [AppState setTaskList:newList];
+        if (createNewGist){
+            [AppState incrementCompletedTasks:list.completedTaskCount];
+            return [GithubService createGistWithContent:newContent username:AppState.username];
+        }else{
+            return [RACSignal return:remoteGist];
+        }
+    }] flattenMap:^RACStream *(OCTGist* gist) {
+        [AppState setGistToEdit:gist];
+        return [RACSignal return:@(YES)];
+    }];
 }
 
-+ (RACSignal*) recycleAndConsumeGist:(OCTGist*) remoteCopy{
-    [AppState setGistToEdit:remoteCopy];
-    OCTGistFile* file = remoteCopy.files.allValues.firstObject;
-    return [[[GithubService retrieveGistWithRawUrl:file.rawURL]
-                              doNext:^(NSString *gistContent) {
-                                  [AppState setTaskList:[TaskList taskListForContent:gistContent]];
-                              }] doError:^(NSError *error) {
-                                  DDLogError(@"recycleAndConsumeGist: failure: \n%@", error);
-                              }];
-}
-
-+ (RACSignal*) createTodaysGistAndConsumeGist:(OCTGist*) remoteCopy isNewDay:(BOOL) isNewDay{
-    OCTGistFile* file = remoteCopy.files.allValues.firstObject;
-    return [[[GithubService retrieveGistWithRawUrl:file.rawURL]
-                flattenMap:^(NSString *gistContent) {
-                    TaskList* taskList = [TaskList taskListForContent:gistContent];
-                    return [self createTodaysGistAndConsumeTaskList:taskList isNewDay:isNewDay];
-                }] doError:^(NSError *error) {
-                    DDLogError(@"createTodaysGistAndConsumeGist: failure: \n%@", error);
-                }];
-}
-
-+ (RACSignal*) createTodaysGistAndConsumeTaskList:(TaskList*) taskList isNewDay:(BOOL) isNewDay{
-    if (isNewDay){
-        [AppState incrementCompletedTasks:taskList.completedTaskCount];
-        [AppState setTaskList:[TaskList newTaskListFromOldTaskList:taskList]];
-    }else{
-        [AppState setTaskList:taskList];
++ (RACSignal*) onlineSyncConsumeLocal:(TaskList*) taskList
+             mostRecentRemoteGist:(OCTGist*) mostRecentGist
+                    createNewGist:(BOOL) createNewGist{
+    
+    if (!mostRecentGist && !createNewGist){
+        return [RACSignal error:Errors.dataError];
     }
-    NSString* username = AppState.username;
-    NSString* gistContent = AppState.taskList.contentForTasks;
-    return [[[GithubService createGistWithContent:gistContent username:username]
-            doNext:^(OCTGist *createdGist) {
-                [AppState setGistToEdit:createdGist];
-            }] doError:^(NSError *error) {
-                DDLogError(@"createTodaysGistAndConsumeTaskList: failure: \n%@", error);
-            }];
+
+    TaskList* newList = createNewGist ? taskList : [TaskList newTaskListFromOldTaskList:taskList];
+    NSString* newContent = newList.contentForTasks;
+    [AppState setTaskList:newList];
+    RACSignal* gistSignal = nil;
+    if (createNewGist){
+        [AppState incrementCompletedTasks:taskList.completedTaskCount];
+        gistSignal = [GithubService createGistWithContent:newContent username:AppState.username];
+    }else{
+        gistSignal = [RACSignal return:mostRecentGist];
+    }
+    return [gistSignal flattenMap:^RACStream *(OCTGist* gist) {
+        [AppState setGistToEdit:gist];
+        return [RACSignal return:@(YES)];
+    }];
 }
 
 #pragma mark - Offline sync helpers
@@ -222,6 +183,20 @@ static BOOL _updateInProgress;
             }];
 }
 
+#pragma mark - Misc helpers
+
++ (RACSignal*) doNothing{
+    return [RACSignal return:nil];
+}
+
++ (RACSignal*) cacheUserMetadata{
+    return [[[GithubService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
+        [AppState setUserName:userInfo.name andUserImageUrl:userInfo.avatarURL.absoluteString];
+    }] doError:^(NSError *error) {
+        DDLogError(@"cacheUserMetadata: error:\n %@", error);
+    }];
+}
+
 #pragma mark - Public session methods
 
 + (RACSignal*) signOut{
@@ -255,10 +230,6 @@ static BOOL _updateInProgress;
 }
 
 #pragma mark - Public synchronization methods
-
-+ (RACSignal*) doNothing{
-    return [RACSignal return:nil];
-}
 
 + (RACSignal*) syncIfResuming {
     return AppState.performedInitialSync ?
@@ -304,7 +275,7 @@ static BOOL _updateInProgress;
     return [self persistTaskList:taskList];
 }
 
-#pragma mark - Misc methods
+#pragma mark - Public misc methods
 
 + (RACSignal*) startTutorialWithDelay{
     if (AppState.showedTutorial || AppState.taskCount > 0){

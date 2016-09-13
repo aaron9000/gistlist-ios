@@ -60,6 +60,7 @@
 		A5E9FF301AEC09D600DC6394 /* MarkdownHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A5E9FF2F1AEC09D600DC6394 /* MarkdownHelper.m */; };
 		A5EEBFAF1D8610F20048C479 /* DateHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EEBFAE1D8610F20048C479 /* DateHelper.m */; };
 		A5EEBFB21D8621560048C479 /* AppState.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EEBFB11D8621560048C479 /* AppState.m */; };
+		A5EEBFB81D87B8BE0048C479 /* TestData.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EEBFB71D87B8BE0048C479 /* TestData.m */; };
 		A5EF71411BA55ACD00BBEBDF /* Errors.m in Sources */ = {isa = PBXBuildFile; fileRef = A5EF71401BA55ACD00BBEBDF /* Errors.m */; };
 		C8228E01725102E18252D0E8 /* libPods-gistlist.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EAE52D2393A45AF328802F0 /* libPods-gistlist.a */; };
 /* End PBXBuildFile section */
@@ -173,6 +174,8 @@
 		A5EEBFAE1D8610F20048C479 /* DateHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DateHelper.m; path = Helpers/DateHelper.m; sourceTree = "<group>"; };
 		A5EEBFB01D8621560048C479 /* AppState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
 		A5EEBFB11D8621560048C479 /* AppState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppState.m; sourceTree = "<group>"; };
+		A5EEBFB61D87B8BE0048C479 /* TestData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestData.h; sourceTree = "<group>"; };
+		A5EEBFB71D87B8BE0048C479 /* TestData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestData.m; sourceTree = "<group>"; };
 		A5EF713F1BA55ACD00BBEBDF /* Errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Errors.h; sourceTree = "<group>"; };
 		A5EF71401BA55ACD00BBEBDF /* Errors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Errors.m; sourceTree = "<group>"; };
 		A5EF71421BA55ADF00BBEBDF /* Notifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifications.h; path = Config/Notifications.h; sourceTree = "<group>"; };
@@ -269,6 +272,8 @@
 				A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */,
 				A51EF21E1D85FC4E004812A7 /* TestHelpers.h */,
 				A51EF21F1D85FC4E004812A7 /* TestHelpers.m */,
+				A5EEBFB61D87B8BE0048C479 /* TestData.h */,
+				A5EEBFB71D87B8BE0048C479 /* TestData.m */,
 			);
 			path = gistlistTests;
 			sourceTree = "<group>";
@@ -716,6 +721,7 @@
 				A51EF21D1D84EF24004812A7 /* SwiftSpec.swift in Sources */,
 				A51EF2201D85FC4E004812A7 /* TestHelpers.m in Sources */,
 				A565C66A1AC7A3980009815A /* gistlistTests.m in Sources */,
+				A5EEBFB81D87B8BE0048C479 /* TestData.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
