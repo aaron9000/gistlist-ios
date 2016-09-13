@@ -6,8 +6,9 @@
 #import <Octokit/OctoKit.h>
 #import "TaskList.h"
 
-@interface TestHelpers : NSObject
+@interface TestHelper : NSObject
 
++ (TaskList*) taskListOneWeekOld;
 + (TaskList*) taskList;
 + (TaskList*) taskListWithLastUpdated:(NSDate*) date;
 + (OCTGist*) gistWithCreationDate:(NSDate*) date;

@@ -1,10 +1,11 @@
-#import "TestHelpers.h"
+#import "TestHelper.h"
 #import "KeychainStorage.h"
 #import "LocalStorage.h"
 #import "TaskList.h"
 #import "GithubService.h"
 #import "AppState.h"
 #import "AppService.h"
+#import "Helpers.h"
 
 #pragma mark - Helper Tests
 
@@ -13,17 +14,17 @@
 QuickSpecBegin(TaskListTests)
 
 it(@"converts tasks to markdown", ^{
-    TaskList* list = [TestHelpers taskList];
+    TaskList* list = [TestHelper taskList];
     expect(list.contentForTasks).to(equal(@"- [ ] foo\n- [x] bar\n"));
 });
 
 it(@"counts completed tasks", ^{
-    TaskList* list = [TestHelpers taskList];
+    TaskList* list = [TestHelper taskList];
     expect(@(list.completedTaskCount)).to(equal(@(1)));
 });
 
 it(@"retrieves tasks by index", ^{
-    TaskList* list = [TestHelpers taskList];
+    TaskList* list = [TestHelper taskList];
     Task* a = list.tasks[0];
     Task* b = list.tasks[1];
     expect(a.taskDescription).to(equal(@"foo"));
@@ -45,9 +46,9 @@ it(@"converts markdown to task", ^{
 });
 
 it(@"tests equality correctly", ^{
-    TaskList* a = [TestHelpers taskList];
-    TaskList* b = [TestHelpers taskList];
-    TaskList* c = [TestHelpers taskList];
+    TaskList* a = [TestHelper taskList];
+    TaskList* b = [TestHelper taskList];
+    TaskList* c = [TestHelper taskList];
     ((Task*)c.tasks[0]).taskDescription = @"qux";
     expect(@([a isEqualToList:b])).to(equal(@(YES)));
     expect(@([a isEqualToList:a])).to(equal(@(YES)));
@@ -55,7 +56,7 @@ it(@"tests equality correctly", ^{
 });
 
 it(@"creats a new task list from old task list (removing completed tasks)", ^{
-    TaskList* a = [TestHelpers taskList];
+    TaskList* a = [TestHelper taskList];
     TaskList* b = [TaskList newTaskListFromOldTaskList:a];
     expect(@(a.tasks.count)).to(equal(@(2)));
     expect(@(b.tasks.count)).to(equal(@(1)));
@@ -63,7 +64,7 @@ it(@"creats a new task list from old task list (removing completed tasks)", ^{
 });
 
 it(@"converts to and from a dictionary", ^{
-    TaskList* a = [TestHelpers taskList];
+    TaskList* a = [TestHelper taskList];
     NSDictionary* d = a.dictionaryValue;
     expect(d[@"Tasks"]).toNot(beNil());
     expect(d[@"LastUpdated"]).toNot(beNil());
@@ -104,7 +105,7 @@ QuickSpecBegin(LocalStorageTests)
 
 it(@"loads and stores local data blobs", ^{
     LocalData* data = [[LocalData alloc] init];
-    data.taskList = TestHelpers.taskList;
+    data.taskList = TestHelper.taskList;
     data.showedTutorial = YES;
     data.isNewUser = YES;
     data.sharedGist = YES;
@@ -120,7 +121,7 @@ QuickSpecEnd
 
 #pragma mark - Service Tests
 
-QuickSpecBegin(GithubServiceTest)
+QuickSpecBegin(GithubServiceTests)
 
 it(@"loads text from a valid gist raw url", ^{
     NSString* url = @"https://gist.githubusercontent.com/aaron9000/5571bec531688cecc69db2b7196d8566/raw/2e9267e70d53c1ca319c9a9bd85979e8079630e0/test.txt";
@@ -134,16 +135,49 @@ it(@"loads text from a valid gist raw url", ^{
 QuickSpecEnd
 
 
-QuickSpecBegin(AppServiceTest)
+QuickSpecBegin(AppServiceTests)
 
 it(@"does not sync on resume if we have not started a session", ^{
-    __block id a = @(YES);
+    __block id a = @(999);
     [AppState resetAllState];
     expect(@(AppState.performedInitialSync)).to(equal(@(NO)));
     [[AppService syncIfResuming] subscribeNext:^(id x) {
         a = x;
     }];
-    expect(a).toEventually(equal(@(NO)));
+    expect(a).toEventually(equal(@(-1)));
+});
+
+it(@"syncs on resume after starting an online session", ^{
+    __block id a = @(999);
+    [AppState resetAllState];
+    [[[AppService startOfflineSession] flattenMap:^RACStream *(id value) {
+        expect(@(AppState.performedInitialSync)).to(equal(@(YES)));
+        return [AppService syncIfResuming];
+    }] subscribeNext:^(id x) {
+        a = x;
+    }];
+    expect(a).toEventually(equal(@(0)));
+});
+
+it(@"offline sync restores clears old tasks when tasklist is old", ^{
+    NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
+    
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:oneWeekAgo]];
+    expect(AppState.taskList.lastUpdated).to(equal(oneWeekAgo));
+    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    
+    __block id a = @(999);
+    __block id b = @(999);
+    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
+        return [AppService syncIfResuming];
+    }] subscribeNext:^(id x) {
+        b = x;
+    }];
+    expect(a).toEventually(equal(@(1)));
+    expect(b).toEventually(equal(@(0)));
 });
 
 QuickSpecEnd

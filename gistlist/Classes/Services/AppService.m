@@ -213,7 +213,9 @@ static BOOL _updateInProgress;
 
 + (RACSignal*) startOnlineSessionWithStoredCreds{
     if ([GithubService authenticateWithStoredCredentials]){
-        return [RACSignal zip:@[[self cacheUserMetadata], [self sync:YES]]];
+        return [[self cacheUserMetadata] flattenMap:^RACStream *(id value) {
+            return [self sync:YES];
+        }];
     }else{
         DDLogError(@"failed to auth with stored credentials");
         return [RACSignal error:Errors.authFailure];
@@ -235,7 +237,7 @@ static BOOL _updateInProgress;
 + (RACSignal*) syncIfResuming {
     return AppState.performedInitialSync ?
     [self sync:AppState.userIsAuthenticated] :
-    [RACSignal return:@(NO)];
+    [RACSignal return:@(-1)];
 }
 
 #pragma mark - Public task management methods

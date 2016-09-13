@@ -6,11 +6,16 @@
 //  Copyright © 2016 Aaron Geisler. All rights reserved.
 //
 
-#import "TestHelpers.h"
+#import "TestHelper.h"
 #import <ISO8601DateFormatter.h>
 #import "TestData.h"
+#import "Helpers.h"
 
-@implementation TestHelpers
+@implementation TestHelper
+
++ (TaskList*) taskListOneWeekOld{
+    return [self taskListWithLastUpdated:DateHelper.oneWeekAgo];
+}
 
 + (TaskList*) taskList{
     return [self taskListWithLastUpdated:NSDate.date];

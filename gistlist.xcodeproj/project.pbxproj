@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		07DAA3F81402C3C6D47E741B /* Pods_gistlistTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 749A92384E6B3CD20461081A /* Pods_gistlistTests.framework */; };
 		A51EF21D1D84EF24004812A7 /* SwiftSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */; };
-		A51EF2201D85FC4E004812A7 /* TestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A51EF21F1D85FC4E004812A7 /* TestHelpers.m */; };
+		A51EF2201D85FC4E004812A7 /* TestHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A51EF21F1D85FC4E004812A7 /* TestHelper.m */; };
 		A565C6501AC7A3980009815A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C64F1AC7A3980009815A /* main.m */; };
 		A565C6531AC7A3980009815A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C6521AC7A3980009815A /* AppDelegate.m */; };
 		A565C66A1AC7A3980009815A /* gistlistTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A565C6691AC7A3980009815A /* gistlistTests.m */; };
@@ -82,8 +82,8 @@
 		749A92384E6B3CD20461081A /* Pods_gistlistTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_gistlistTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EAE52D2393A45AF328802F0 /* libPods-gistlist.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-gistlist.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftSpec.swift; sourceTree = "<group>"; };
-		A51EF21E1D85FC4E004812A7 /* TestHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestHelpers.h; sourceTree = "<group>"; };
-		A51EF21F1D85FC4E004812A7 /* TestHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestHelpers.m; sourceTree = "<group>"; };
+		A51EF21E1D85FC4E004812A7 /* TestHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestHelper.h; sourceTree = "<group>"; };
+		A51EF21F1D85FC4E004812A7 /* TestHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestHelper.m; sourceTree = "<group>"; };
 		A565C64A1AC7A3980009815A /* GistList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GistList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A565C64E1AC7A3980009815A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A565C64F1AC7A3980009815A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -270,8 +270,8 @@
 				A565C6691AC7A3980009815A /* gistlistTests.m */,
 				A565C6671AC7A3980009815A /* Supporting Files */,
 				A51EF21C1D84EF24004812A7 /* SwiftSpec.swift */,
-				A51EF21E1D85FC4E004812A7 /* TestHelpers.h */,
-				A51EF21F1D85FC4E004812A7 /* TestHelpers.m */,
+				A51EF21E1D85FC4E004812A7 /* TestHelper.h */,
+				A51EF21F1D85FC4E004812A7 /* TestHelper.m */,
 				A5EEBFB61D87B8BE0048C479 /* TestData.h */,
 				A5EEBFB71D87B8BE0048C479 /* TestData.m */,
 			);
@@ -719,7 +719,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A51EF21D1D84EF24004812A7 /* SwiftSpec.swift in Sources */,
-				A51EF2201D85FC4E004812A7 /* TestHelpers.m in Sources */,
+				A51EF2201D85FC4E004812A7 /* TestHelper.m in Sources */,
 				A565C66A1AC7A3980009815A /* gistlistTests.m in Sources */,
 				A5EEBFB81D87B8BE0048C479 /* TestData.m in Sources */,
 			);
