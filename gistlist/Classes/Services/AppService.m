@@ -44,7 +44,7 @@ static BOOL _updateInProgress;
         return [RACSignal error:Errors.notAuthenticated];
     }
     
-    RACSignal* retrieve = [GithubService retrieveMostRecentGistSince:DateHelper.oneWeekAgo];
+    RACSignal* retrieve = [GithubService retrieveMostRecentGistSince:DateHelper.oneMonthAgo];
     return [[retrieve flattenMap:^(OCTGist* mostRecentRemoteGist) {
         TaskList* localTaskList = AppState.taskList;
         NSDate* localLastUpdated = localTaskList.lastUpdated;
@@ -201,25 +201,21 @@ static BOOL _updateInProgress;
 #pragma mark - Public session methods
 
 + (RACSignal*) signOut{
-    [GithubService invalidateCachedLogin];
-    return [self doNothing];
-    
+    return [GithubService invalidateCachedLogin];
 }
 
 + (RACSignal*) startOfflineSession{
-    [GithubService invalidateCachedLogin];
-    return [self sync:NO];
+    return [[GithubService invalidateCachedLogin] flattenMap:^RACStream *(id value) {
+        return [self sync:NO];
+    }];
 }
 
 + (RACSignal*) startOnlineSessionWithStoredCreds{
-    if ([GithubService authenticateWithStoredCredentials]){
-        return [[self cacheUserMetadata] flattenMap:^RACStream *(id value) {
-            return [self sync:YES];
-        }];
-    }else{
-        DDLogError(@"failed to auth with stored credentials");
-        return [RACSignal error:Errors.authFailure];
-    }
+    return [[[GithubService authenticateWithStoredCredentials] flattenMap:^RACStream *(id value) {
+        return [self cacheUserMetadata];
+    }] flattenMap:^RACStream *(id value) {
+        return [self sync:YES];
+    }];
 }
 
 + (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
@@ -230,7 +226,8 @@ static BOOL _updateInProgress;
         return [self sync:YES];
     }] doError:^(NSError *error) {
         DDLogError(@"auth failure:\n %@", error);
-        [GithubService invalidateCachedLogin];
+        [[GithubService invalidateCachedLogin] subscribeNext:^(id x) {
+        }];
     }];
 }
 

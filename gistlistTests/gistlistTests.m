@@ -74,6 +74,18 @@ it(@"converts to and from a dictionary", ^{
 
 QuickSpecEnd
 
+QuickSpecBegin(AppStateTests)
+
+it(@"setters and getters work", ^{
+    NSDate* recent = NSDate.date;
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
+    expect(AppState.taskList.lastUpdated).to(equal(recent));
+    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    
+});
+
+QuickSpecEnd
 
 #pragma mark - Storage Tests
 
@@ -164,8 +176,6 @@ it(@"offline sync restores tasks when tasklist is recent", ^{
     
     [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
-    expect(AppState.taskList.lastUpdated).to(equal(recent));
-    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
     
     __block id a = @(999);
     __block id b = @(999);
@@ -185,8 +195,6 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
     
     [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListWithLastUpdated:oneWeekAgo]];
-    expect(AppState.taskList.lastUpdated).to(equal(oneWeekAgo));
-    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
     
     __block id a = @(999);
     __block id b = @(999);
@@ -201,25 +209,41 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
     expect(b).toEventually(equal(@(0)));
 });
 
-it(@"online sync restores tasks when remote tasklist is recent", ^{
-    NSDate* recent = NSDate.date;
+it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
+//    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
+//    NSDate* threeWeeksAgo = DateHelper.threeWeeksAgo;
+//    
+//    [AppState resetAllState];
+//    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
+//    
+//    
+//    __block id a = @(999);
+//    __block id b = @(999);
+//    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+//        a = x;
+//        expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
+//        return [AppService syncIfResuming];
+//    }] subscribeNext:^(id x) {
+//        b = x;
+//    }];
+//    expect(a).toEventually(equal(@(1)));
+//    expect(b).toEventually(equal(@(0)));
+});
+
+it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins", ^{
     
-    [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
-    expect(AppState.taskList.lastUpdated).to(equal(recent));
-    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+});
+
+it(@"online sync: local 2 weeks and remote recent: tasks unchanged & remote wins", ^{
     
-    __block id a = @(999);
-    __block id b = @(999);
-    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
-        a = x;
-        expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
-        return [AppService syncIfResuming];
-    }] subscribeNext:^(id x) {
-        b = x;
-    }];
-    expect(a).toEventually(equal(@(0)));
-    expect(b).toEventually(equal(@(0)));
+});
+
+it(@"online sync: local recent and remote more recent: tasks unchanged & remote wins", ^{
+    
+});
+
+it(@"online sync: local recent and remote less recent: tasks unchanged & local wins", ^{
+    
 });
 
 QuickSpecEnd

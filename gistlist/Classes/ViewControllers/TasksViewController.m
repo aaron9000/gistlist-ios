@@ -621,13 +621,13 @@ typedef enum InterfaceState {
 - (void) viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _refreshOnAppear = YES;
+    _syncOnViewWillAppear = YES;
 }
 
 - (void) viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    if (_refreshOnAppear){
-        _refreshOnAppear = NO;
+    if (_syncOnViewWillAppear){
+        _syncOnViewWillAppear = NO;
         [self syncWithAppState];
     }
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(syncWithAppState) name:kGLEventSyncComplete object:nil];

@@ -39,14 +39,19 @@ static OCTClient* _client;
     return (BOOL)(_client != nil && [_client isAuthenticated]);
 }
 
-+ (BOOL) authenticateWithStoredCredentials{
++ (RACSignal*) authenticateWithStoredCredentials{
     NSString* savedToken = [KeychainStorage token];
     NSString* savedUserLogin = [KeychainStorage userLogin];
     if (savedToken.length > 0 && savedUserLogin.length > 0){
         OCTUser* user = [OCTUser userWithRawLogin:savedUserLogin server:OCTServer.dotComServer];
         _client = [OCTClient authenticatedClientWithUser:user token:savedToken];
     }
-    return [_client isAuthenticated];
+    if (_client.isAuthenticated){
+        return [RACSignal return:@(YES)];
+    }else{
+        DDLogError(@"failed to auth with stored credentials");
+        return [RACSignal error:Errors.authFailure];
+    }
 }
 
 + (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth{
@@ -144,9 +149,10 @@ static OCTClient* _client;
 
 #pragma mark - Helpers
 
-+ (void) invalidateCachedLogin{
++ (RACSignal*) invalidateCachedLogin{
     [KeychainStorage setToken:@"" userLogin:@""];
     _client = nil;
+    return [RACSignal return:@(YES)];
 }
 
 + (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
@@ -170,8 +176,6 @@ static OCTClient* _client;
     NSMutableArray* mutableFilteredGists = [NSMutableArray arrayWithArray:filteredGists];
     NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO];
     [mutableFilteredGists sortUsingDescriptors:@[sortByDate]];
-    
-    // Return sorted and filtered list
     return mutableFilteredGists;
 }
 

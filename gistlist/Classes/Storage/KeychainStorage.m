@@ -17,7 +17,6 @@
 #define kGLUserStarsServiceKey @"GistListUserStarsServiceKey"
 #define kGLAccount @"GistListAccountKey"
 
-
 + (NSInteger) completedTasks{
     NSString* completedTasksString = [SSKeychain passwordForService:kGLUserStarsServiceKey account:kGLAccount];
     if (completedTasksString.length == 0){

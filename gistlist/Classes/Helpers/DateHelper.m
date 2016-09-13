@@ -19,8 +19,24 @@
     return date;
 }
 
++ (NSDate*) fiveMinutesAgo{
+    return [[NSDate date] dateByAddingTimeInterval:-60.0f * 5.0f];
+}
+
 + (NSDate*) oneWeekAgo{
     return [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f];
+}
+
++ (NSDate*) twoWeeksAgo{
+    return [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f * 2.0f];
+}
+
++ (NSDate*) threeWeeksAgo{
+    return [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f * 3.0f];
+}
+
++ (NSDate*) oneMonthAgo{
+    return [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 30.0f];
 }
 
 + (BOOL) isOlderThan24Hours:(NSDate*) date{

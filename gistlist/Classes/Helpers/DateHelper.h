@@ -11,7 +11,11 @@
 @interface DateHelper : NSObject
 
 + (NSDate*) twelveAMToday;
++ (NSDate*) fiveMinutesAgo;
 + (NSDate*) oneWeekAgo;
++ (NSDate*) twoWeeksAgo;
++ (NSDate*) threeWeeksAgo;
++ (NSDate*) oneMonthAgo;
 + (BOOL) isOlderThan24Hours:(NSDate*) date;
 
 @end

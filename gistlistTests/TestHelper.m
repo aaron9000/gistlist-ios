@@ -13,8 +13,16 @@
 
 @implementation TestHelper
 
-+ (TaskList*) taskListOneWeekOld{
-    return [self taskListWithLastUpdated:DateHelper.oneWeekAgo];
++ (TaskList*) taskListAlternate{
+    return [self taskListAlternateWithLastUpdated:NSDate.date];
+}
+
++ (TaskList*) taskListAlternateWithLastUpdated:(NSDate*) date{
+    Task* a = [Task taskWithDescription:@"foo" isCompleted:NO];
+    Task* b = [Task taskWithDescription:@"bar" isCompleted:YES];
+    Task* c = [Task taskWithDescription:@"qux" isCompleted:NO];
+    Task* d = [Task taskWithDescription:@"blek" isCompleted:NO];
+    return [[TaskList alloc] initWithTasks:@[a, b, c, d] lastUpdated:date];
 }
 
 + (TaskList*) taskList{

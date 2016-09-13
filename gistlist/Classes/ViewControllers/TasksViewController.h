@@ -21,7 +21,7 @@
     VBFPopFlatButton* _actionButton;
     
     // State
-    BOOL _refreshOnAppear;
+    BOOL _syncOnViewWillAppear;
     BOOL _isEditMode;
     UITextField* _cellTextfieldBeingEdited;
 }

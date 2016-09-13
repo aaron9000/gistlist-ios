@@ -13,10 +13,10 @@
 
 }
 
-+ (void) invalidateCachedLogin;
 + (BOOL) userIsAuthenticated;
-+ (BOOL) authenticateWithStoredCredentials;
 
++ (RACSignal*) invalidateCachedLogin;
++ (RACSignal*) authenticateWithStoredCredentials;
 + (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth;
 + (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username;
 + (RACSignal*) createViralGist;
