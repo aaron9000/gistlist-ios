@@ -10,10 +10,20 @@
 #import <SVProgressHUD.h>
 #import "Errors.h"
 #import "InterfaceConsts.h"
+#import "Extensions.h"
 
 @implementation DialogHelper
 
 #pragma mark - Toasts
+
++ (void) attemptShowRewardToast:(int) tasks{
+    if (tasks == 0){
+        return;
+    }
+    [NSObject performBlock:^{
+        [self showTaskCompletionToast:tasks];
+    } afterDelay:0.3f];
+}
 
 + (void) showThankYouToast{
     [SVProgressHUD showSuccessWithStatus:@"Thank you for supporting GistList!"];

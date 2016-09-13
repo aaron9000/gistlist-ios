@@ -159,6 +159,27 @@ it(@"syncs on resume after starting an online session", ^{
     expect(a).toEventually(equal(@(0)));
 });
 
+it(@"offline sync restores tasks when tasklist is recent", ^{
+    NSDate* recent = NSDate.date;
+    
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
+    expect(AppState.taskList.lastUpdated).to(equal(recent));
+    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    
+    __block id a = @(999);
+    __block id b = @(999);
+    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+        return [AppService syncIfResuming];
+    }] subscribeNext:^(id x) {
+        b = x;
+    }];
+    expect(a).toEventually(equal(@(0)));
+    expect(b).toEventually(equal(@(0)));
+});
+
 it(@"offline sync restores clears old tasks when tasklist is old", ^{
     NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
     
@@ -177,6 +198,27 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
         b = x;
     }];
     expect(a).toEventually(equal(@(1)));
+    expect(b).toEventually(equal(@(0)));
+});
+
+it(@"online sync restores tasks when remote tasklist is recent", ^{
+    NSDate* recent = NSDate.date;
+    
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
+    expect(AppState.taskList.lastUpdated).to(equal(recent));
+    expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    
+    __block id a = @(999);
+    __block id b = @(999);
+    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+        return [AppService syncIfResuming];
+    }] subscribeNext:^(id x) {
+        b = x;
+    }];
+    expect(a).toEventually(equal(@(0)));
     expect(b).toEventually(equal(@(0)));
 });
 

@@ -224,8 +224,10 @@ static BOOL _updateInProgress;
 
 + (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth{
     NSString* authOrNil = auth.length == 0 ? nil : auth;
-    return [[[GithubService authenticateUsername:user withPassword:password withAuth:authOrNil] flattenMap:^(id x) {
-        return [RACSignal zip:@[[self sync:YES], [self cacheUserMetadata]]];
+    return [[[[GithubService authenticateUsername:user withPassword:password withAuth:authOrNil] flattenMap:^(id x) {
+        return [self cacheUserMetadata];
+    }] flattenMap:^RACStream *(id value) {
+        return [self sync:YES];
     }] doError:^(NSError *error) {
         DDLogError(@"auth failure:\n %@", error);
         [GithubService invalidateCachedLogin];

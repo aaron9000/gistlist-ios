@@ -126,19 +126,10 @@
     [[AppService syncIfResuming] withLoadingSpinner] :
     [AppService syncIfResuming];
     [sync subscribeNext:^(NSNumber* completedTasks) {
-        [self attemptShowRewardToast:completedTasks.integerValue];
+        [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
     } error:^(NSError *error) {
         [DialogHelper showSyncFailedToast];
     }];
-}
-
-- (void) attemptShowRewardToast:(int) tasks{
-    if (tasks == 0){
-        return;
-    }
-    [NSObject performBlock:^{
-        [DialogHelper showTaskCompletionToast:tasks];
-    } afterDelay:0.3f];
 }
 
 @end

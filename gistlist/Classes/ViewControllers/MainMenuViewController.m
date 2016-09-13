@@ -52,17 +52,17 @@
         return;
     }
     
-    RACSignal* signal = AppState.hasStoredCreds ?
-    [[AppService startOnlineSessionWithStoredCreds] withLoadingSpinner] :
-    [AppService startOnlineSessionWithStoredCreds];
-    [signal subscribeNext:^(id x) {
-        [appDelegate registerAndScheduleNotifications];
-        [self showTasks];
-    } error:^(NSError *error) {
+    if (AppState.hasStoredCreds){
+        [[[AppService startOnlineSessionWithStoredCreds] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
+            [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
+            [appDelegate registerAndScheduleNotifications];
+            [self showTasks];
+        }];
+    }else{
         [NSObject performBlock:^{
             [appDelegate registerAndScheduleNotifications];
         } afterDelay:1.0f];
-    }];
+    }
 }
 
 - (void) setup{
