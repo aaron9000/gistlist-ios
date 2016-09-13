@@ -15,25 +15,8 @@
 #define kGLTokenService @"GistListTokenServiceKey"
 #define kGLUserLoginService @"GistListUserLoginServiceKey"
 #define kGLUserStarsServiceKey @"GistListUserStarsServiceKey"
-#define kGLShareServiceKey @"GistListShareServiceKey"
 #define kGLAccount @"GistListAccountKey"
 
-+ (BOOL) sharedGist{
-    NSString* shareString = [SSKeychain passwordForService:kGLShareServiceKey account:kGLAccount];
-    if (shareString.length == 0){
-        DDLogError(@"'share' not found in keychain");
-        return NO;
-    }
-    int intValue = shareString.intValue;
-    return intValue > 0;
-}
-
-+ (void) setSharedGist:(BOOL) sharedGist{
-    BOOL saveShared = [SSKeychain setPassword:[NSString stringWithFormat:@"%i", sharedGist ? 1 : 0] forService:kGLShareServiceKey account:kGLAccount];
-    if (!saveShared){
-        DDLogError(@"failed to save 'share' in keychain");
-    }
-}
 
 + (NSInteger) completedTasks{
     NSString* completedTasksString = [SSKeychain passwordForService:kGLUserStarsServiceKey account:kGLAccount];
@@ -73,6 +56,11 @@
     if (!saveToken || !saveUserLogin){
         DDLogError(@"failed to save 'token' / 'userLogin' in keychain");
     }
+}
+
++ (void) resetKeychainData{
+    [self setToken:@"" userLogin:@""];
+    [self setCompletedTasks:0];
 }
 
 @end

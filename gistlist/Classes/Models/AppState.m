@@ -21,7 +21,7 @@ static NSInteger _pendingCompletedTasks;
     return LocalStorage.localData.taskList.tasks;
 }
 
-#pragma mark - Setters
+#pragma mark - Setters & modifiers
 
 + (void) setPendingCompletedTasks:(NSInteger) tasks{
     _pendingCompletedTasks = tasks;
@@ -53,13 +53,25 @@ static NSInteger _pendingCompletedTasks;
 }
 
 + (void) setSharedGist:(BOOL) sharedGist{
-    [KeychainStorage setSharedGist:sharedGist];
+    LocalData* newData = LocalStorage.localData.clone;
+    newData.sharedGist = sharedGist;
+    [LocalStorage setLocalData:newData];
 }
 
 + (void) setShowedTutorial:(BOOL) showedTutorial{
     LocalData* newData = LocalStorage.localData.clone;
     newData.showedTutorial = showedTutorial;
     [LocalStorage setLocalData:newData];
+}
+
++ (void) resetAllState{
+    [LocalStorage resetLocalData];
+    [KeychainStorage resetKeychainData];
+    _gistToEdit = nil;
+    _userImageUrl = nil;
+    _username = nil;
+    _performedInitialSync = NO;
+    _pendingCompletedTasks = 0;
 }
 
 #pragma mark - Task getters
@@ -101,7 +113,6 @@ static NSInteger _pendingCompletedTasks;
     return KeychainStorage.completedTasks;
 }
 
-
 #pragma mark - Users and authentication getters
 
 + (NSString*) userImageUrl{
@@ -123,7 +134,7 @@ static NSInteger _pendingCompletedTasks;
 #pragma mark - Misc
 
 + (BOOL) sharedGist{
-    return KeychainStorage.sharedGist;
+    return LocalStorage.localData.sharedGist;
 }
 
 + (BOOL) performedInitialSync{

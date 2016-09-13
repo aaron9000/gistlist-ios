@@ -5,6 +5,7 @@
     
 }
 @property (nonatomic) BOOL isNewUser;
+@property (nonatomic) BOOL sharedGist;
 @property (nonatomic) BOOL showedTutorial;
 @property (nonatomic) BOOL scheduledLocalNotification;
 @property (nonatomic, strong) TaskList* taskList;

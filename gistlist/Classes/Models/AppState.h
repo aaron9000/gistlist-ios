@@ -4,7 +4,7 @@
 
 @interface AppState : NSObject
 
-// Setters
+// Setters & modifiers
 + (void) setPendingCompletedTasks:(NSInteger) tasks;
 + (void) setTaskList:(TaskList*) taskList;
 + (void) setUserName:(NSString*) name andUserImageUrl:(NSString*) imageUrl;
@@ -13,6 +13,7 @@
 + (void) setGistToEdit:(OCTGist*) gistToEdit;
 + (void) setSharedGist:(BOOL) sharedGist;
 + (void) setShowedTutorial:(BOOL) showedTutorial;
++ (void) resetAllState;
 
 // Task getters
 + (OCTGist*) gistToEdit;
@@ -35,6 +36,5 @@
 + (BOOL) performedInitialSync;
 + (BOOL) sharedGist;
 + (BOOL) showedTutorial;
-
 
 @end

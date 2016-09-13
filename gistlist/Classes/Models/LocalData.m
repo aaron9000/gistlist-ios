@@ -4,6 +4,7 @@
 #define kShowedTutorial @"ShowedTutorial"
 #define kTaskList @"TaskList"
 #define kIsNewUser @"IsNewUser"
+#define kSharedGist @"SharedGist"
 
 @implementation LocalData
 
@@ -17,6 +18,7 @@
     return  @{
                 kShowedTutorial: @(_showedTutorial),
                 kIsNewUser: @(_isNewUser),
+                kSharedGist: @(_sharedGist),
                 kTaskList: taskList,
                 kScheduledLocalNotification: @(_scheduledLocalNotification)
              };
@@ -24,6 +26,7 @@
 
 - (void) defaultValues{
     _showedTutorial = NO;
+    _sharedGist = NO;
     _isNewUser = YES;
     _scheduledLocalNotification = NO;
     _taskList = [[TaskList alloc] init];
@@ -45,6 +48,7 @@
             _taskList = [[TaskList alloc] initWithDictionary:dictionary[kTaskList]];
             _scheduledLocalNotification = [dictionary[kScheduledLocalNotification] boolValue];
             _showedTutorial = [dictionary[kShowedTutorial] boolValue];
+            _sharedGist = [dictionary[kSharedGist] boolValue];
             _isNewUser = [dictionary[kIsNewUser] boolValue];
         }else{
             [self defaultValues];

@@ -3,6 +3,8 @@
 #import "LocalStorage.h"
 #import "TaskList.h"
 #import "GithubService.h"
+#import "AppState.h"
+#import "AppService.h"
 
 #pragma mark - Helper Tests
 
@@ -105,6 +107,7 @@ it(@"loads and stores local data blobs", ^{
     data.taskList = TestHelpers.taskList;
     data.showedTutorial = YES;
     data.isNewUser = YES;
+    data.sharedGist = YES;
     data.scheduledLocalNotification = YES;
     [LocalStorage setLocalData:data];
     LocalData* retrievedData = LocalStorage.localData;
@@ -133,18 +136,15 @@ QuickSpecEnd
 
 QuickSpecBegin(AppServiceTest)
 
-//it(@"loads and stores completed tasks", ^{
-//    LocalData* data = [[LocalData alloc] init];
-//    data.taskList = TestHelpers.taskList;
-//    data.showedTutorial = YES;
-//    data.isNewUser = YES;
-//    data.scheduledLocalNotification = YES;
-//    [LocalStorage setLocalData:data];
-//    LocalData* retrievedData = LocalStorage.localData;
-//    
-//    expect(@([retrievedData.taskList isEqualToList:data.taskList])).to(equal(@(YES)));
-//    expect(@(retrievedData.isNewUser)).to(equal(@(YES)));
-//});
+it(@"does not sync on resume if we have not started a session", ^{
+    __block id a = @(YES);
+    [AppState resetAllState];
+    expect(@(AppState.performedInitialSync)).to(equal(@(NO)));
+    [[AppService syncIfResuming] subscribeNext:^(id x) {
+        a = x;
+    }];
+    expect(a).toEventually(equal(@(NO)));
+});
 
 QuickSpecEnd
 

@@ -168,9 +168,10 @@ static BOOL _updateInProgress;
     OCTGist* gistToEdit = AppState.gistToEdit;
     NSString* username = AppState.username;
     return [[[[GithubService updateGist:gistToEdit withContent:content username:username]
-             doNext:^(OCTGist *updatedGist) {
-                 [AppState setGistToEdit:updatedGist];
-             }]
+              flattenMap:^RACStream *(OCTGist* updatedGist) {
+                  [AppState setGistToEdit:updatedGist];
+                  return [RACSignal return:@(YES)];
+              }]
             doError:^(NSError *error) {
                 DDLogError(@"update gist: error:\n %@", error);
             }]
@@ -234,7 +235,7 @@ static BOOL _updateInProgress;
 + (RACSignal*) syncIfResuming {
     return AppState.performedInitialSync ?
     [self sync:AppState.userIsAuthenticated] :
-    [self doNothing];
+    [RACSignal return:@(NO)];
 }
 
 #pragma mark - Public task management methods
@@ -242,7 +243,7 @@ static BOOL _updateInProgress;
 + (RACSignal*) createViralGist{
     return [[GithubService createViralGist] flattenMap:^RACStream *(id value) {
         [AppState setSharedGist:YES];
-        return [self doNothing];
+        return [RACSignal return:@(YES)];
     }];
 }
 
