@@ -3,8 +3,8 @@
 #import <Nimble/Nimble.h>
 #import <OCMock/OCMock.h>
 #import <Foundation/Foundation.h>
-#import <Octokit/OctoKit.h>
-#import "TaskList.h"
+#import "AppService.h"
+#import "GithubService.h"
 
 @interface TestHelper : NSObject
 

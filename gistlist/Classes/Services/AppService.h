@@ -10,6 +10,7 @@
 
 // Sessions
 - (RACSignal*) signOut;
+- (RACSignal*) cacheUserMetadata;
 - (RACSignal*) startOfflineSession;
 - (RACSignal*) startOnlineSessionWithStoredCreds;
 - (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth;

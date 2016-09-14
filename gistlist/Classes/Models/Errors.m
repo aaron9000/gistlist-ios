@@ -43,7 +43,6 @@
                        withSuggestion:@""];
 }
 
-
 + (NSError *)dataError{
     return [self errorWithDescription:@"Data Error"
                            withReason:@"State issue"

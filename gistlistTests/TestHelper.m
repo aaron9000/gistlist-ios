@@ -1,13 +1,4 @@
-//
-//  TestHelpers.m
-//  gistlist
-//
-//  Created by Aaron Geisler on 9/11/16.
-//  Copyright © 2016 Aaron Geisler. All rights reserved.
-//
-
 #import "TestHelper.h"
-#import <ISO8601DateFormatter.h>
 #import "TestData.h"
 #import "Helpers.h"
 
@@ -40,7 +31,8 @@
     ISO8601DateFormatter* formatter = [[ISO8601DateFormatter alloc] init];
     NSMutableDictionary* dict = TestData.sampleGistData.mutableCopy;
     dict[@"created_at"] = [formatter stringFromDate:date];
-    return [[OCTGist alloc] initWithDictionary:dict error:&error];
+    OCTGist* gist = [MTLJSONAdapter modelOfClass:OCTGist.class fromJSONDictionary:dict error:NULL];
+    return gist;
 }
 
 @end

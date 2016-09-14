@@ -1,10 +1,3 @@
-//
-//  GitHubService.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/12/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
 
 #import <CocoaLumberjack.h>
 #import <ObjectiveSugar.h>
@@ -12,9 +5,9 @@
 #import "MarkdownHelper.h"
 #import "GithubService.h"
 #import "KeychainStorage.h"
-#import "TokensAndKeys.h"
-#import "OCTClient+FetchDatedGist.h"
+#import "Config.h"
 #import "Errors.h"
+#import "Extensions.h"
 
 @implementation GithubService
 

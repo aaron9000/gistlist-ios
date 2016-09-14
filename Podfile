@@ -24,7 +24,6 @@ def testing_pods
 end
 
 target 'gistlistTests' do
-	app_pods
     testing_pods
 end
 

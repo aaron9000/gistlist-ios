@@ -211,27 +211,70 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
 
 // TODO: see if we need the eventually syntax...
 // TODO: common setup for remote tests
-// TODO: service -> idiomatic obj c singletons
+
+
+//- (RACSignal*) signOut;
+//- (RACSignal*) startOfflineSession;
+//- (RACSignal*) startOnlineSessionWithStoredCreds;
+//- (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth;
+//- (RACSignal*) syncIfResuming;
+//- (RACSignal*) createViralGist;
+//- (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText;
+//- (RACSignal*) deleteTask:(NSInteger) index;
+//- (RACSignal*) toggleTask:(NSInteger) index;
+//- (RACSignal*) addNewTaskWithText:(NSString*) text;
+//- (RACSignal*) startTutorialWithDelay;
+//- (RACSignal*) cacheUserMeta;
+
+
+//- (BOOL) userIsAuthenticated;
+//- (RACSignal*) invalidateCachedLogin;
+//- (RACSignal*) authenticateWithStoredCredentials;
+//- (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth;
+//- (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username;
+//- (RACSignal*) createViralGist;
+//- (RACSignal*) retrieveUserMetadata;
+//- (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username;
+//- (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url;
+//- (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since;
+
 
 it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
-//    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
-//    NSDate* threeWeeksAgo = DateHelper.threeWeeksAgo;
-//    
-//    [AppState resetAllState];
-//    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
-//    
-//    
-//    __block id a = @(999);
-//    __block id b = @(999);
-//    [[[AppService startOfflineSession] flattenMap:^RACStream *(id x) {
-//        a = x;
-//        expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
-//        return [AppService syncIfResuming];
-//    }] subscribeNext:^(id x) {
-//        b = x;
-//    }];
-//    expect(a).toEventually(equal(@(1)));
-//    expect(b).toEventually(equal(@(0)));
+    
+    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
+    NSDate* threeWeeksAgo = DateHelper.threeWeeksAgo;
+    
+//    TaskList* localTaskList = TestHelper.taskList;
+    TaskList* remoteTaskList = TestHelper.taskListAlternate;
+    OCTGist* remoteGist = [TestHelper gistWithCreationDate:threeWeeksAgo];
+    
+    
+    // Github service stubs
+    id ghServiceMock = OCMClassMock([GithubService class]);
+    OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
+    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:remoteGist]);
+    OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
+    OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
+    OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);
+
+    // App service stubs
+    id appServiceMock = OCMClassMock([AppService class]);
+    OCMStub([appServiceMock cacheUserMetadata]).andReturn([RACSignal return:@(YES)]);
+    
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
+    
+    __block id a = @(999);
+    __block id b = @(999);
+    [[[AppService.sharedService startOnlineSessionWithStoredCreds] flattenMap:^RACStream *(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
+        return [AppService.sharedService syncIfResuming];
+    }] subscribeNext:^(id x) {
+        b = x;
+    }];
+    expect(a).toEventually(equal(@(1)));
+    expect(b).toEventually(equal(@(0)));
 });
 
 it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins", ^{
