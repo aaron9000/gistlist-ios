@@ -287,9 +287,8 @@
     if (AppState.showedTutorial || AppState.taskCount > 0){
         return [RACSignal return:@(NO)];
     }
-    return [[RACSignal performBlock:^{
+    return [[[RACSignal empty] delay:0.5f] flattenMap:^RACStream *(id value) {
         [AppState setShowedTutorial:YES];
-    } afterDelay:0.5f] flattenMap:^RACStream *(id value) {
         return [RACSignal return:@(YES)];
     }];
 }

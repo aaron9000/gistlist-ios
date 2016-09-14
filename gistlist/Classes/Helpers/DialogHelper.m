@@ -17,7 +17,7 @@
 #pragma mark - Toasts
 
 + (void) attemptShowRewardToast:(int) tasks{
-    if (tasks == 0){
+    if (tasks <= 0){
         return;
     }
     [NSObject performBlock:^{

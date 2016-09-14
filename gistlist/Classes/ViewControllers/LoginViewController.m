@@ -204,8 +204,6 @@
 
 - (void) setup{
     
-    
-    
     self.view.backgroundColor = [GLTheme backgroundColorDefault];
     _closeButton = [self.view addCloseButton];
     [[_closeButton rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x) {
