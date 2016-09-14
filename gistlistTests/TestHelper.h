@@ -14,9 +14,7 @@
 + (TaskList*) taskListRemoteWithLastUpdated:(NSDate*) date;
 
 + (void) setupForOnlineTests:(NSDate*) localDate remoteDate:(NSDate*) remoteDate service:(id*)ghServiceMockRef withGist:(id*) gistMockRef;
-+ (void) commonSetup;
 + (void) commonTeardown;
-+ (void) commonOnlineSyncSetup:(id*)ghServiceMockRef withGist:(id*) gistMockRef;
 + (void) commonOnlineSyncTeardown:(id*)ghServiceMockRef withGist:(id*) gistMockRef;
 
 @end

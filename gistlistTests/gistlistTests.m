@@ -98,9 +98,12 @@ QuickSpecEnd
 
 QuickSpecBegin(AppStateTests)
 
+afterEach(^{
+    [TestHelper commonTeardown];
+});
+
 it(@"setters and getters work", ^{
     NSDate* recent = NSDate.date;
-    [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:recent]];
     expect(AppState.taskList.lastUpdated).to(equal(recent));
     expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
@@ -112,6 +115,10 @@ QuickSpecEnd
 #pragma mark - Storage Tests
 
 QuickSpecBegin(KeychainStorageTests)
+
+afterEach(^{
+    [TestHelper commonTeardown];
+});
 
 it(@"loads and stores completed tasks", ^{
     
@@ -137,6 +144,10 @@ QuickSpecEnd
 
 QuickSpecBegin(LocalStorageTests)
 
+afterEach(^{
+    [TestHelper commonTeardown];
+});
+
 it(@"loads and stores local data blobs", ^{
     LocalData* data = [[LocalData alloc] init];
     data.taskList = TestHelper.taskListLocal;
@@ -153,27 +164,17 @@ it(@"loads and stores local data blobs", ^{
 
 QuickSpecEnd
 
-#pragma mark - Service Tests
-
-QuickSpecBegin(GithubServiceTests)
-
-it(@"loads text from a valid gist raw url", ^{
-    NSString* url = @"https://gist.githubusercontent.com/aaron9000/5571bec531688cecc69db2b7196d8566/raw/2e9267e70d53c1ca319c9a9bd85979e8079630e0/test.txt";
-    __block NSString* content = nil;
-    [[GithubService.sharedService retrieveGistContentFromUrl:[NSURL URLWithString:url]] subscribeNext:^(NSString* c) {
-        content = c;
-    }];
-    expect(content).toEventually(equal(@"dolphin"));
-});
-
-QuickSpecEnd
-
+#pragma mark - App Service Tests
 
 QuickSpecBegin(AppServiceOfflineTests)
 
+afterEach(^{
+    [TestHelper commonTeardown];
+});
+
 it(@"does not sync on resume if we have not started a session", ^{
     __block id completedTaskCount = @(999);
-    [AppState resetAllState];
+    
     expect(@(AppState.performedInitialSync)).to(equal(@(NO)));
     [[AppService.sharedService syncIfResuming] subscribeNext:^(id x) {
         completedTaskCount = x;
@@ -183,7 +184,7 @@ it(@"does not sync on resume if we have not started a session", ^{
 
 it(@"syncs on resume after starting an online session", ^{
     __block id completedTaskCount = @(999);
-    [AppState resetAllState];
+    
     [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id value) {
         expect(@(AppState.performedInitialSync)).to(equal(@(YES)));
         return [AppService.sharedService syncIfResuming];
@@ -196,7 +197,6 @@ it(@"syncs on resume after starting an online session", ^{
 it(@"offline sync restores tasks when tasklist is recent", ^{
     NSDate* recent = NSDate.date;
     
-    [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:recent]];
     
     __block id completedTaskCount = @(999);
@@ -215,7 +215,6 @@ it(@"offline sync restores tasks when tasklist is recent", ^{
 it(@"offline sync restores clears old tasks when tasklist is old", ^{
     NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
     
-    [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:oneWeekAgo]];
     
     __block id completedTaskCount = @(999);
@@ -237,11 +236,6 @@ QuickSpecBegin(AppServiceOnlineTests)
 
 __block id ghServiceMock = nil;
 __block id gistMock = nil;
-
-beforeEach(^{
-    [TestHelper commonSetup];
-    [TestHelper commonOnlineSyncSetup:&ghServiceMock withGist:&gistMock];
-});
 
 afterEach(^{
     [TestHelper commonTeardown];
@@ -315,7 +309,6 @@ it(@"online sync: local recent and remote less recent: (tasks unchanged & local 
     }];
     expect(completedTaskCount).toEventually(equal(@(0)));
 });
-
 
 it(@"online sync: local nonexistent and remote recent: (tasks unchanged & remote wins)", ^{
     NSDate* localDate = nil;

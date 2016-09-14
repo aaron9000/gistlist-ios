@@ -1,11 +1,3 @@
-//
-//  ViewController.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/7/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import "LandingViewController.h"
 #import "TasksViewController.h"
 #import "MainMenuViewController.h"
@@ -61,9 +53,6 @@
 
 - (void) viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-#warning WTF
-    return;
-    
     [self animateAndTransition];
 }
 

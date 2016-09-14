@@ -29,23 +29,17 @@
     return [[TaskList alloc] initWithTasks:@[a, b] lastUpdated:date];
 }
 
-+ (void) commonSetup {
-    [AppState resetAllState];
-}
-
 + (void) commonTeardown {
-    // Nothing
-}
-
-+ (void) commonOnlineSyncSetup:(id*)ghServiceMockRef withGist:(id*) gistMockRef{
-    // Do nothing
+    [AppState resetAllState];
 }
 
 + (void) commonOnlineSyncTeardown:(id*)ghServiceMockRef withGist:(id*) gistMockRef {
     [*ghServiceMockRef stopMocking];
     [*gistMockRef stopMocking];
-    *ghServiceMockRef = nil;
-    *gistMockRef = nil;
+    
+    *ghServiceMockRef = OCMClassMock([GithubService class]);;
+    *gistMockRef = OCMClassMock([OCTGist class]);
+    OCMStub(ClassMethod([*ghServiceMockRef sharedService])).andReturn(*ghServiceMockRef);
 }
 
 + (void) setupForOnlineTests:(NSDate*) localDate remoteDate:(NSDate*) remoteDate service:(id*)ghServiceMockRef withGist:(id*) gistMockRef{

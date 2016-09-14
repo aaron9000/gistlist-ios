@@ -94,7 +94,6 @@
 
 - (NSString*) contentForTasks{
     NSString* content = @"";
-#warning want reduce
     for (Task* task in _tasks) {
         content = [content stringByAppendingString:task.stringValue];
     }

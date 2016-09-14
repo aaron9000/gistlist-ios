@@ -1,13 +1,5 @@
-//
-//  AppDelegate.m
-//  gistlist
-//
-//  Created by Aaron Geisler on 3/28/15.
-//  Copyright (c) 2015 Aaron Geisler. All rights reserved.
-//
 
 #import "AppDelegate.h"
-#import <OCTClient.h>
 #import <iRate.h>
 #import <Crittercism.h>
 #import <Mixpanel.h>
@@ -97,6 +89,10 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    #ifdef TEST
+        return;
+    #endif
+    
     // Thirdparty libraries
     [self setupThirdParty];
     
@@ -121,8 +117,9 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-#warning poop
-    return;
+    #ifdef TEST
+        return;
+    #endif
     
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     RACSignal* sync = AppState.performedInitialSync ?
