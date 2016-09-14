@@ -61,6 +61,9 @@
 
 - (void) viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+#warning WTF
+    return;
+    
     [self animateAndTransition];
 }
 

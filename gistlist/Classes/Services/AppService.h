@@ -3,9 +3,11 @@
 #import "RACSignal+Extensions.h"
 #import "TaskList.h"
 #import "Task.h"
+#import "GithubService.h"
 
 @interface AppService : NSObject{
-
+    BOOL _performAdditionalUpdate;
+    BOOL _updateInProgress;
 }
 
 // Sessions

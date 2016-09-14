@@ -12,6 +12,5 @@
 + (TaskList*) taskListWithLastUpdated:(NSDate*) date;
 + (TaskList*) taskListAlternate;
 + (TaskList*) taskListAlternateWithLastUpdated:(NSDate*) date;
-+ (OCTGist*) gistWithCreationDate:(NSDate*) date;
 
 @end

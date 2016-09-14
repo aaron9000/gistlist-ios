@@ -3,7 +3,7 @@
 #import <Octokit/OctoKit.h>
 
 @interface GithubService : NSObject{
-
+    OCTClient* _client;
 }
 
 - (BOOL) userIsAuthenticated;

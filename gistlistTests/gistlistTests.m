@@ -147,7 +147,7 @@ it(@"loads text from a valid gist raw url", ^{
 QuickSpecEnd
 
 
-QuickSpecBegin(AppServiceTests)
+QuickSpecBegin(AppServiceOfflineTests)
 
 it(@"does not sync on resume if we have not started a session", ^{
     __block id a = @(999);
@@ -209,76 +209,73 @@ it(@"offline sync restores clears old tasks when tasklist is old", ^{
     expect(b).toEventually(equal(@(0)));
 });
 
-// TODO: see if we need the eventually syntax...
-// TODO: common setup for remote tests
+QuickSpecEnd
 
-
-//- (RACSignal*) signOut;
-//- (RACSignal*) startOfflineSession;
-//- (RACSignal*) startOnlineSessionWithStoredCreds;
-//- (RACSignal*) startOnlineSessionWithUsername:(NSString*) user password:(NSString*) password auth:(NSString*) auth;
-//- (RACSignal*) syncIfResuming;
-//- (RACSignal*) createViralGist;
-//- (RACSignal*) updateTask:(NSInteger) index withText:(NSString*) newText;
-//- (RACSignal*) deleteTask:(NSInteger) index;
-//- (RACSignal*) toggleTask:(NSInteger) index;
-//- (RACSignal*) addNewTaskWithText:(NSString*) text;
-//- (RACSignal*) startTutorialWithDelay;
-//- (RACSignal*) cacheUserMeta;
-
-
-//- (BOOL) userIsAuthenticated;
-//- (RACSignal*) invalidateCachedLogin;
-//- (RACSignal*) authenticateWithStoredCredentials;
-//- (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth;
-//- (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username;
-//- (RACSignal*) createViralGist;
-//- (RACSignal*) retrieveUserMetadata;
-//- (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username;
-//- (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url;
-//- (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since;
-
+QuickSpecBegin(AppServiceOnlineTests)
 
 it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
-    
     NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
     NSDate* threeWeeksAgo = DateHelper.threeWeeksAgo;
-    
-//    TaskList* localTaskList = TestHelper.taskList;
     TaskList* remoteTaskList = TestHelper.taskListAlternate;
-    OCTGist* remoteGist = [TestHelper gistWithCreationDate:threeWeeksAgo];
+    OCTGist* gist = [[OCTGist alloc] init];
     
-    
-    // Github service stubs
+    // Github service mocks
     id ghServiceMock = OCMClassMock([GithubService class]);
     OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
-    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:remoteGist]);
+    OCMStub([ghServiceMock createGistWithContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:gist]);
+    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:nil]);
     OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
     OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
     OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);
-
-    // App service stubs
-    id appServiceMock = OCMClassMock([AppService class]);
-    OCMStub([appServiceMock cacheUserMetadata]).andReturn([RACSignal return:@(YES)]);
+    OCMStub(ClassMethod([ghServiceMock sharedService])).andReturn(ghServiceMock);
     
+    // Configure local storage
     [AppState resetAllState];
     [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
+    [KeychainStorage setToken:@"token" userLogin:@"login"];
     
     __block id a = @(999);
-    __block id b = @(999);
     [[[AppService.sharedService startOnlineSessionWithStoredCreds] flattenMap:^RACStream *(id x) {
-        a = x;
+        expect(x).toEventually(equal(@(1)));
         expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
         return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
-        b = x;
+        a = x;
     }];
-    expect(a).toEventually(equal(@(1)));
-    expect(b).toEventually(equal(@(0)));
+    expect(a).toEventually(equal(@(0)));
 });
 
 it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins", ^{
+    NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
+    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
+    TaskList* remoteTaskList = TestHelper.taskListAlternate;
+    OCTGist* gist = [[OCTGist alloc] init];
     
+    // Gist mock
+    id gistMock = OCMClassMock([OCTGist class]);
+    OCMStub([gistMock creationDate]).andReturn(oneWeekAgo);
+    
+    // Github service mocks
+    id ghServiceMock = OCMClassMock([GithubService class]);
+    OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
+    OCMStub([ghServiceMock createGistWithContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:gist]);
+    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:gistMock]);
+    OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
+    OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
+    OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);
+    OCMStub(ClassMethod([ghServiceMock sharedService])).andReturn(ghServiceMock);
+    
+    // Configure local storage
+    [AppState resetAllState];
+    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
+    [KeychainStorage setToken:@"token" userLogin:@"login"];
+    
+    __block id a = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(3)));
+    }];
+    expect(a).toEventually(equal(@(2)));
 });
 
 it(@"online sync: local 2 weeks and remote recent: tasks unchanged & remote wins", ^{

@@ -121,6 +121,9 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+#warning poop
+    return;
+    
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     RACSignal* sync = AppState.performedInitialSync ?
     [[AppService.sharedService syncIfResuming] withLoadingSpinner] :

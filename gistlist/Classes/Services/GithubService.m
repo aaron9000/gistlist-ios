@@ -15,10 +15,6 @@
 
 #define GITHUB_SCOPES OCTClientAuthorizationScopesUser | OCTClientAuthorizationScopesGist | OCTClientAuthorizationScopesRepository
 
-#pragma mark - State
-
-static OCTClient* _client;
-
 + (instancetype)sharedService
 {
     static GithubService *sharedInstance = nil;
@@ -26,7 +22,6 @@ static OCTClient* _client;
     dispatch_once(&onceToken, ^{
         sharedInstance = [[GithubService alloc] init];
         [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
-        _client = nil;
     });
     return sharedInstance;
 }

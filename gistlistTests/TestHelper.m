@@ -13,7 +13,8 @@
     Task* b = [Task taskWithDescription:@"bar" isCompleted:YES];
     Task* c = [Task taskWithDescription:@"qux" isCompleted:NO];
     Task* d = [Task taskWithDescription:@"blek" isCompleted:NO];
-    return [[TaskList alloc] initWithTasks:@[a, b, c, d] lastUpdated:date];
+    Task* e = [Task taskWithDescription:@"flurp" isCompleted:YES];
+    return [[TaskList alloc] initWithTasks:@[a, b, c, d, e] lastUpdated:date];
 }
 
 + (TaskList*) taskList{
@@ -26,13 +27,5 @@
     return [[TaskList alloc] initWithTasks:@[a, b] lastUpdated:date];
 }
 
-+ (OCTGist*) gistWithCreationDate:(NSDate*) date{
-    NSError* error = nil;
-    ISO8601DateFormatter* formatter = [[ISO8601DateFormatter alloc] init];
-    NSMutableDictionary* dict = TestData.sampleGistData.mutableCopy;
-    dict[@"created_at"] = [formatter stringFromDate:date];
-    OCTGist* gist = [MTLJSONAdapter modelOfClass:OCTGist.class fromJSONDictionary:dict error:NULL];
-    return gist;
-}
 
 @end

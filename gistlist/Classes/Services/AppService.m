@@ -19,9 +19,6 @@
 
 @implementation AppService
 
-static BOOL _performAdditionalUpdate;
-static BOOL _updateInProgress;
-
 + (instancetype)sharedService
 {
     static AppService *sharedInstance = nil;
@@ -90,7 +87,7 @@ static BOOL _updateInProgress;
     OCTGistFile* file = remoteGist.files.allValues.firstObject;
     return [[[GithubService.sharedService retrieveGistContentFromUrl:file.rawURL] flattenMap:^RACStream *(NSString* content) {
         TaskList* list = [TaskList taskListForContent:content];
-        TaskList* newList = createNewGist ? list : [TaskList newTaskListFromOldTaskList:list];
+        TaskList* newList = createNewGist ? [TaskList newTaskListFromOldTaskList:list] : list;
         NSString* newContent = newList.contentForTasks;
         [AppState setTaskList:newList];
         if (createNewGist){
@@ -109,16 +106,14 @@ static BOOL _updateInProgress;
              mostRecentRemoteGist:(OCTGist*) mostRecentGist
                     createNewGist:(BOOL) createNewGist{
     
-    if (!mostRecentGist && !createNewGist){
-        return [RACSignal error:Errors.dataError];
-    }
-
-    TaskList* newList = createNewGist ? taskList : [TaskList newTaskListFromOldTaskList:taskList];
+    TaskList* newList = createNewGist ? [TaskList newTaskListFromOldTaskList:taskList] : taskList;
     NSString* newContent = newList.contentForTasks;
     [AppState setTaskList:newList];
     RACSignal* gistSignal = nil;
     if (createNewGist){
         [AppState incrementCompletedTasks:taskList.completedTaskCount];
+    }
+    if (createNewGist || !mostRecentGist){
         gistSignal = [GithubService.sharedService createGistWithContent:newContent username:AppState.username];
     }else{
         gistSignal = [RACSignal return:mostRecentGist];
@@ -197,6 +192,9 @@ static BOOL _updateInProgress;
 #pragma mark - Misc helpers
 
 - (RACSignal*) cacheUserMetadata{
+    if (!AppState.username.length || !AppState.userImageUrl.length){
+        return [RACSignal return:@(YES)];
+    }
     return [[[GithubService.sharedService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
         [AppState setUserName:userInfo.name andUserImageUrl:userInfo.avatarURL.absoluteString];
     }] doError:^(NSError *error) {

@@ -67,7 +67,6 @@
 }
 
 - (void) setup{
-    
     UIView* containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, 400)];
     float padding = [self verticalPadding];
     
