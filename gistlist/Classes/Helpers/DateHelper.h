@@ -17,5 +17,6 @@
 + (NSDate*) threeWeeksAgo;
 + (NSDate*) oneMonthAgo;
 + (BOOL) isOlderThan24Hours:(NSDate*) date;
++ (BOOL) date:(NSDate*) date isOlderThanOtherDate:(NSDate*) otherDate;
 
 @end

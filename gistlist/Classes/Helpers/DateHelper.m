@@ -43,5 +43,9 @@
     return [[self twelveAMToday] compare:date] == NSOrderedDescending;
 }
 
++ (BOOL) date:(NSDate*) date isOlderThanOtherDate:(NSDate*) otherDate{
+    return [date compare:otherDate] == NSOrderedAscending;
+}
+
 
 @end

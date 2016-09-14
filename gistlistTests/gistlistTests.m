@@ -9,6 +9,28 @@
 
 #pragma mark - Helper Tests
 
+QuickSpecBegin(DateHelperTests)
+
+it(@"compares dates correctly", ^{
+    
+    BOOL trueResult = [DateHelper date:DateHelper.twoWeeksAgo isOlderThanOtherDate:DateHelper.oneWeekAgo];
+    expect(@(trueResult)).to(equal(@(YES)));
+    
+    BOOL falseResult = [DateHelper date:DateHelper.oneWeekAgo isOlderThanOtherDate:DateHelper.twoWeeksAgo];
+    expect(@(falseResult)).to(equal(@(NO)));
+    
+    BOOL twoNilsResult = [DateHelper date:nil isOlderThanOtherDate:nil];
+    expect(@(twoNilsResult)).to(equal(@(NO)));
+    
+    BOOL firstNilResult = [DateHelper date:DateHelper.oneWeekAgo isOlderThanOtherDate:nil];
+    expect(@(firstNilResult)).to(equal(@(NO)));
+    
+    BOOL secondNilResult = [DateHelper date:nil isOlderThanOtherDate:DateHelper.oneWeekAgo];
+    expect(@(secondNilResult)).to(equal(@(NO)));
+});
+
+QuickSpecEnd
+
 #pragma mark - Model Tests
 
 QuickSpecBegin(TaskListTests)
@@ -135,6 +157,23 @@ QuickSpecEnd
 
 QuickSpecBegin(GithubServiceTests)
 
+//beforeEach(^{
+//    dolphin = [Dolphin new];
+//});
+
+//afterEach(^{
+//    dolphin = [Dolphin new];
+//});
+
+//beforeSuite(^{
+//    [OceanDatabase createDatabase:@"test.db"];
+//    [OceanDatabase connectToDatabase:@"test.db"];
+//});
+//
+//afterSuite(^{
+//    [OceanDatabase teardownDatabase:@"test.db"];
+//});
+
 it(@"loads text from a valid gist raw url", ^{
     NSString* url = @"https://gist.githubusercontent.com/aaron9000/5571bec531688cecc69db2b7196d8566/raw/2e9267e70d53c1ca319c9a9bd85979e8079630e0/test.txt";
     __block NSString* content = nil;
@@ -213,26 +252,23 @@ QuickSpecEnd
 
 QuickSpecBegin(AppServiceOnlineTests)
 
+__block id ghServiceMock = nil;
+__block id gistMock = nil;
+
+beforeEach(^{
+    [TestHelper commonSetup];
+    [TestHelper commonOnlineSyncSetup:&ghServiceMock withGist:&gistMock];
+});
+
+afterEach(^{
+    [TestHelper commonTeardown];
+    [TestHelper commonOnlineSyncTeardown:&ghServiceMock withGist:&gistMock];
+});
+
 it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
-    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
-    NSDate* threeWeeksAgo = DateHelper.threeWeeksAgo;
-    TaskList* remoteTaskList = TestHelper.taskListAlternate;
-    OCTGist* gist = [[OCTGist alloc] init];
-    
-    // Github service mocks
-    id ghServiceMock = OCMClassMock([GithubService class]);
-    OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
-    OCMStub([ghServiceMock createGistWithContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:gist]);
-    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:nil]);
-    OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
-    OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
-    OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);
-    OCMStub(ClassMethod([ghServiceMock sharedService])).andReturn(ghServiceMock);
-    
-    // Configure local storage
-    [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
-    [KeychainStorage setToken:@"token" userLogin:@"login"];
+    NSDate* localDate = DateHelper.twoWeeksAgo;
+    NSDate* remoteDate = DateHelper.threeWeeksAgo;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
     __block id a = @(999);
     [[[AppService.sharedService startOnlineSessionWithStoredCreds] flattenMap:^RACStream *(id x) {
@@ -246,29 +282,9 @@ it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wi
 });
 
 it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins", ^{
-    NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
-    NSDate* twoWeeksAgo = DateHelper.twoWeeksAgo;
-    TaskList* remoteTaskList = TestHelper.taskListAlternate;
-    OCTGist* gist = [[OCTGist alloc] init];
-    
-    // Gist mock
-    id gistMock = OCMClassMock([OCTGist class]);
-    OCMStub([gistMock creationDate]).andReturn(oneWeekAgo);
-    
-    // Github service mocks
-    id ghServiceMock = OCMClassMock([GithubService class]);
-    OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
-    OCMStub([ghServiceMock createGistWithContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:gist]);
-    OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:gistMock]);
-    OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
-    OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
-    OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);
-    OCMStub(ClassMethod([ghServiceMock sharedService])).andReturn(ghServiceMock);
-    
-    // Configure local storage
-    [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:twoWeeksAgo]];
-    [KeychainStorage setToken:@"token" userLogin:@"login"];
+    NSDate* localDate = DateHelper.twoWeeksAgo;
+    NSDate* remoteDate = DateHelper.oneWeekAgo;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
     __block id a = @(999);
     [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
@@ -278,12 +294,31 @@ it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins
     expect(a).toEventually(equal(@(2)));
 });
 
-it(@"online sync: local 2 weeks and remote recent: tasks unchanged & remote wins", ^{
+it(@"online sync: local 2 weeks and remote recent: tasks unchanged & remote wins", ^{    
+    NSDate* localDate = DateHelper.twoWeeksAgo;
+    NSDate* remoteDate = NSDate.date;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
+    __block id a = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(5)));
+    }];
+    expect(a).toEventually(equal(@(0)));
 });
 
 it(@"online sync: local recent and remote more recent: tasks unchanged & remote wins", ^{
     
+    NSDate* localDate = DateHelper.fiveMinutesAgo;
+    NSDate* remoteDate = NSDate.date;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+
+    __block id a = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        a = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(5)));
+    }];
+    expect(a).toEventually(equal(@(0)));
 });
 
 it(@"online sync: local recent and remote less recent: tasks unchanged & local wins", ^{
