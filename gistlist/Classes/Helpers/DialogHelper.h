@@ -25,8 +25,7 @@
 + (RACSignal*) showWelcomeAlert;
 + (RACSignal*) showLogoutConfirmationAlert;
 + (RACSignal*) showSyncRequiredAlert;
-+ (RACSignal*) showLoginErrorAlert;
-+ (RACSignal*) showAuthErrorAlert;
++ (RACSignal*) showTwoFactorErrorAlert;
 + (RACSignal*) showCredentialsErrorAlert;
 + (RACSignal*) showOKErrorAlert:(NSError *)error;
 

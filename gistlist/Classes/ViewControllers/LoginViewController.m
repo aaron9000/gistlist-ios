@@ -92,7 +92,7 @@
     [self dismissKeyboard];
     _state = state;
     NSArray* leavingViews = state == LoginInterfaceStateCredentials ? [self twoFactorViews] : [self credentialsViews];
-    NSArray* enteringViews = state == LoginInterfaceStateTwoFactor ? [self twoFactorViews] : [self credentialsViews];
+    NSArray* enteringViews = state == LoginInterfaceStateCredentials ? [self credentialsViews] : [self twoFactorViews];
     for (UIView* v in leavingViews) {
         [self translateOff:v];
     }
@@ -110,15 +110,16 @@
         [self popViewController];
     } error:^(NSError *error) {
         if (error.code == OCTClientErrorTwoFactorAuthenticationOneTimePasswordRequired){
-            if (_state == LoginInterfaceStateTwoFactor){
+            if (_state == LoginInterfaceStateCredentials){
                 [self changeInterfaceState:LoginInterfaceStateTwoFactor];
             }else{
                 [AnalyticsHelper loginFailure];
-                [[DialogHelper showAuthErrorAlert] subscribeNext:^(id x) {
+                [[DialogHelper showTwoFactorErrorAlert] subscribeNext:^(id x) {
                 }];
             }
         }else{
             if (error.code == OCTClientErrorAuthenticationFailed){
+                [AnalyticsHelper loginFailure];
                 [[DialogHelper showCredentialsErrorAlert] subscribeNext:^(id x) {
                 }];
             }else{
@@ -199,7 +200,10 @@
         [self attemptVerify];
     }];
     
-    [self changeInterfaceState:LoginInterfaceStateCredentials];
+    // Start hidden
+    for (UIView* v in [self twoFactorViews]) {
+        v.hidden = YES;
+    }
 }
 
 - (void) setup{

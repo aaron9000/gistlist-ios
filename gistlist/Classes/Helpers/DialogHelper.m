@@ -70,20 +70,14 @@
     return [alert rac_buttonClickedSignal];
 }
 
-+ (RACSignal*) showAuthErrorAlert{
++ (RACSignal*) showTwoFactorErrorAlert{
     UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Auth Error" message:@"Make sure your authorization code is correct." delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil];
     [alert show];
     return [alert rac_buttonClickedSignal];
 }
 
 + (RACSignal*) showCredentialsErrorAlert{
-    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Login Error" message:@"Make sure your credentials correct." delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil];
-    [alert show];
-    return [alert rac_buttonClickedSignal];
-}
-
-+ (RACSignal*) showLoginErrorAlert{
-    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Sign In Error" message:@"Make sure your credentials are entered correctly." delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil];
+    UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Login Error" message:@"Make sure your credentials are correct." delegate:self cancelButtonTitle:@"OK" otherButtonTitles: nil];
     [alert show];
     return [alert rac_buttonClickedSignal];
 }
