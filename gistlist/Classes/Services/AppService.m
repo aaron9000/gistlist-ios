@@ -162,12 +162,12 @@
     if (AppState.gistToEdit == nil){
         return [RACSignal error:Errors.dataError];
     }
-    if (_updateInProgress){
+    if (_syncInProgress){
         return [RACSignal error:Errors.updateInProgress];
     }
     
     // Make update call
-    _updateInProgress = YES;
+    _syncInProgress = YES;
     NSString* content = [newTaskList contentForTasks];
     OCTGist* gistToEdit = AppState.gistToEdit;
     NSString* username = AppState.username;
@@ -180,7 +180,8 @@
                 DDLogError(@"update gist: error:\n %@", error);
             }]
             doCompleted:^{
-                _updateInProgress = NO;
+                // TODO: It may be wise to try to sync again in circumstances where a sync call was squashed
+                _syncInProgress = NO;
             }];
 }
 

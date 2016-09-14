@@ -6,7 +6,7 @@
 #import "GithubService.h"
 
 @interface AppService : NSObject{
-    BOOL _updateInProgress;
+    BOOL _syncInProgress;
 }
 
 // Sessions
