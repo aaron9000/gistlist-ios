@@ -163,7 +163,6 @@
         return [RACSignal error:Errors.dataError];
     }
     if (_updateInProgress){
-        _performAdditionalUpdate = YES;
         return [RACSignal error:Errors.updateInProgress];
     }
     
@@ -182,10 +181,6 @@
             }]
             doCompleted:^{
                 _updateInProgress = NO;
-                if (_performAdditionalUpdate){
-                    _performAdditionalUpdate = NO;
-                    [self persistTaskList:newTaskList];
-                }
             }];
 }
 
