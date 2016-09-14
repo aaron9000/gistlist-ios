@@ -8,10 +8,10 @@
 
 @interface TestHelper : NSObject
 
-+ (TaskList*) taskList;
-+ (TaskList*) taskListWithLastUpdated:(NSDate*) date;
-+ (TaskList*) taskListAlternate;
-+ (TaskList*) taskListAlternateWithLastUpdated:(NSDate*) date;
++ (TaskList*) taskListLocal;
++ (TaskList*) taskListLocalWithLastUpdated:(NSDate*) date;
++ (TaskList*) taskListRemote;
++ (TaskList*) taskListRemoteWithLastUpdated:(NSDate*) date;
 
 + (void) setupForOnlineTests:(NSDate*) localDate remoteDate:(NSDate*) remoteDate service:(id*)ghServiceMockRef withGist:(id*) gistMockRef;
 + (void) commonSetup;

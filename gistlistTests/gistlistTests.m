@@ -36,17 +36,17 @@ QuickSpecEnd
 QuickSpecBegin(TaskListTests)
 
 it(@"converts tasks to markdown", ^{
-    TaskList* list = [TestHelper taskList];
+    TaskList* list = [TestHelper taskListLocal];
     expect(list.contentForTasks).to(equal(@"- [ ] foo\n- [x] bar\n"));
 });
 
 it(@"counts completed tasks", ^{
-    TaskList* list = [TestHelper taskList];
+    TaskList* list = [TestHelper taskListLocal];
     expect(@(list.completedTaskCount)).to(equal(@(1)));
 });
 
 it(@"retrieves tasks by index", ^{
-    TaskList* list = [TestHelper taskList];
+    TaskList* list = [TestHelper taskListLocal];
     Task* a = list.tasks[0];
     Task* b = list.tasks[1];
     expect(a.taskDescription).to(equal(@"foo"));
@@ -68,9 +68,9 @@ it(@"converts markdown to task", ^{
 });
 
 it(@"tests equality correctly", ^{
-    TaskList* a = [TestHelper taskList];
-    TaskList* b = [TestHelper taskList];
-    TaskList* c = [TestHelper taskList];
+    TaskList* a = [TestHelper taskListLocal];
+    TaskList* b = [TestHelper taskListLocal];
+    TaskList* c = [TestHelper taskListLocal];
     ((Task*)c.tasks[0]).taskDescription = @"qux";
     expect(@([a isEqualToList:b])).to(equal(@(YES)));
     expect(@([a isEqualToList:a])).to(equal(@(YES)));
@@ -78,7 +78,7 @@ it(@"tests equality correctly", ^{
 });
 
 it(@"creats a new task list from old task list (removing completed tasks)", ^{
-    TaskList* a = [TestHelper taskList];
+    TaskList* a = [TestHelper taskListLocal];
     TaskList* b = [TaskList newTaskListFromOldTaskList:a];
     expect(@(a.tasks.count)).to(equal(@(2)));
     expect(@(b.tasks.count)).to(equal(@(1)));
@@ -86,7 +86,7 @@ it(@"creats a new task list from old task list (removing completed tasks)", ^{
 });
 
 it(@"converts to and from a dictionary", ^{
-    TaskList* a = [TestHelper taskList];
+    TaskList* a = [TestHelper taskListLocal];
     NSDictionary* d = a.dictionaryValue;
     expect(d[@"Tasks"]).toNot(beNil());
     expect(d[@"LastUpdated"]).toNot(beNil());
@@ -101,7 +101,7 @@ QuickSpecBegin(AppStateTests)
 it(@"setters and getters work", ^{
     NSDate* recent = NSDate.date;
     [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
+    [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:recent]];
     expect(AppState.taskList.lastUpdated).to(equal(recent));
     expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
     
@@ -139,7 +139,7 @@ QuickSpecBegin(LocalStorageTests)
 
 it(@"loads and stores local data blobs", ^{
     LocalData* data = [[LocalData alloc] init];
-    data.taskList = TestHelper.taskList;
+    data.taskList = TestHelper.taskListLocal;
     data.showedTutorial = YES;
     data.isNewUser = YES;
     data.sharedGist = YES;
@@ -157,23 +157,6 @@ QuickSpecEnd
 
 QuickSpecBegin(GithubServiceTests)
 
-//beforeEach(^{
-//    dolphin = [Dolphin new];
-//});
-
-//afterEach(^{
-//    dolphin = [Dolphin new];
-//});
-
-//beforeSuite(^{
-//    [OceanDatabase createDatabase:@"test.db"];
-//    [OceanDatabase connectToDatabase:@"test.db"];
-//});
-//
-//afterSuite(^{
-//    [OceanDatabase teardownDatabase:@"test.db"];
-//});
-
 it(@"loads text from a valid gist raw url", ^{
     NSString* url = @"https://gist.githubusercontent.com/aaron9000/5571bec531688cecc69db2b7196d8566/raw/2e9267e70d53c1ca319c9a9bd85979e8079630e0/test.txt";
     __block NSString* content = nil;
@@ -189,63 +172,63 @@ QuickSpecEnd
 QuickSpecBegin(AppServiceOfflineTests)
 
 it(@"does not sync on resume if we have not started a session", ^{
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [AppState resetAllState];
     expect(@(AppState.performedInitialSync)).to(equal(@(NO)));
     [[AppService.sharedService syncIfResuming] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
     }];
-    expect(a).toEventually(equal(@(-1)));
+    expect(completedTaskCount).toEventually(equal(@(-1)));
 });
 
 it(@"syncs on resume after starting an online session", ^{
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [AppState resetAllState];
     [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id value) {
         expect(@(AppState.performedInitialSync)).to(equal(@(YES)));
         return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
     }];
-    expect(a).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(0)));
 });
 
 it(@"offline sync restores tasks when tasklist is recent", ^{
     NSDate* recent = NSDate.date;
     
     [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:recent]];
+    [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:recent]];
     
-    __block id a = @(999);
-    __block id b = @(999);
+    __block id completedTaskCount = @(999);
+    __block id completedTaskCountAfterSync = @(999);
     [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id x) {
-        a = x;
+        completedTaskCount = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
         return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
-        b = x;
+        completedTaskCountAfterSync = x;
     }];
-    expect(a).toEventually(equal(@(0)));
-    expect(b).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(0)));
+    expect(completedTaskCountAfterSync).toEventually(equal(@(0)));
 });
 
 it(@"offline sync restores clears old tasks when tasklist is old", ^{
     NSDate* oneWeekAgo = DateHelper.oneWeekAgo;
     
     [AppState resetAllState];
-    [AppState setTaskList:[TestHelper taskListWithLastUpdated:oneWeekAgo]];
+    [AppState setTaskList:[TestHelper taskListLocalWithLastUpdated:oneWeekAgo]];
     
-    __block id a = @(999);
-    __block id b = @(999);
+    __block id completedTaskCount = @(999);
+    __block id completedTaskCountAfterSync = @(999);
     [[[AppService.sharedService startOfflineSession] flattenMap:^RACStream *(id x) {
-        a = x;
+        completedTaskCount = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
         return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
-        b = x;
+        completedTaskCountAfterSync = x;
     }];
-    expect(a).toEventually(equal(@(1)));
-    expect(b).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(1)));
+    expect(completedTaskCountAfterSync).toEventually(equal(@(0)));
 });
 
 QuickSpecEnd
@@ -265,64 +248,138 @@ afterEach(^{
     [TestHelper commonOnlineSyncTeardown:&ghServiceMock withGist:&gistMock];
 });
 
-it(@"online sync: local 2 weeks old & remote 3 weeks old: tasks clear & local wins", ^{
+it(@"online sync: local 2 weeks old & remote 3 weeks old: (tasks clear & local wins)", ^{
     NSDate* localDate = DateHelper.twoWeeksAgo;
     NSDate* remoteDate = DateHelper.threeWeeksAgo;
     [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [[[AppService.sharedService startOnlineSessionWithStoredCreds] flattenMap:^RACStream *(id x) {
         expect(x).toEventually(equal(@(1)));
         expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
         return [AppService.sharedService syncIfResuming];
     }] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
     }];
-    expect(a).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(0)));
 });
 
-it(@"online sync: local 2 weeks old and remote 1 week: tasks clear & remote wins", ^{
+it(@"online sync: local 2 weeks old and remote 1 week: (tasks clear & remote wins)", ^{
     NSDate* localDate = DateHelper.twoWeeksAgo;
     NSDate* remoteDate = DateHelper.oneWeekAgo;
     [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(3)));
     }];
-    expect(a).toEventually(equal(@(2)));
+    expect(completedTaskCount).toEventually(equal(@(2)));
 });
 
-it(@"online sync: local 2 weeks and remote recent: tasks unchanged & remote wins", ^{    
+it(@"online sync: local 2 weeks and remote recent: (tasks unchanged & remote wins)", ^{
     NSDate* localDate = DateHelper.twoWeeksAgo;
     NSDate* remoteDate = NSDate.date;
     [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(5)));
     }];
-    expect(a).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(0)));
 });
 
-it(@"online sync: local recent and remote more recent: tasks unchanged & remote wins", ^{
-    
+it(@"online sync: local recent and remote more recent: (tasks unchanged & remote wins)", ^{
     NSDate* localDate = DateHelper.fiveMinutesAgo;
     NSDate* remoteDate = NSDate.date;
     [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
 
-    __block id a = @(999);
+    __block id completedTaskCount = @(999);
     [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
-        a = x;
+        completedTaskCount = x;
         expect(@(AppState.taskList.tasks.count)).to(equal(@(5)));
     }];
-    expect(a).toEventually(equal(@(0)));
+    expect(completedTaskCount).toEventually(equal(@(0)));
 });
 
-it(@"online sync: local recent and remote less recent: tasks unchanged & local wins", ^{
+it(@"online sync: local recent and remote less recent: (tasks unchanged & local wins)", ^{
+    NSDate* localDate = NSDate.date;
+    NSDate* remoteDate = DateHelper.fiveMinutesAgo;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
     
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(0)));
+});
+
+
+it(@"online sync: local nonexistent and remote recent: (tasks unchanged & remote wins)", ^{
+    NSDate* localDate = nil;
+    NSDate* remoteDate = NSDate.date;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+    
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(5)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(0)));
+});
+
+it(@"online sync: local nonexistent and remote one week old: (tasks clear & remote wins)", ^{
+    NSDate* localDate = nil;
+    NSDate* remoteDate = DateHelper.oneWeekAgo;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+    
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(3)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(2)));
+});
+
+it(@"online sync: local recent and remote nonexistent: (tasks unchanged & local wins)", ^{
+    NSDate* localDate = NSDate.date;
+    NSDate* remoteDate = nil;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+    
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(2)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(0)));
+});
+
+it(@"online sync: local one week old and remote nonexistent: (tasks clear & local wins)", ^{
+    NSDate* localDate = DateHelper.oneWeekAgo;
+    NSDate* remoteDate = nil;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+    
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(1)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(1)));
+});
+
+it(@"online sync: local nonexistent and remote nonexistent: (new task list)", ^{
+    NSDate* localDate = nil;
+    NSDate* remoteDate = nil;
+    [TestHelper setupForOnlineTests:localDate remoteDate:remoteDate service:&ghServiceMock withGist:&gistMock];
+    
+    __block id completedTaskCount = @(999);
+    [[AppService.sharedService startOnlineSessionWithStoredCreds] subscribeNext:^(id x) {
+        completedTaskCount = x;
+        expect(@(AppState.taskList.tasks.count)).to(equal(@(0)));
+    }];
+    expect(completedTaskCount).toEventually(equal(@(0)));
 });
 
 QuickSpecEnd
