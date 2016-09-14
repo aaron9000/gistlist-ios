@@ -25,7 +25,7 @@ https://gist.github.com/aaron9000/3d3e0d82810970bfcd9c
 ###Running the Tests
 Run tests via XCode's test runner (cmd + U)
 
-###Made by [Apptivus](https://apptivus.com)
+###Made by [Apptivus](http://apptivus.com)
 - Code: [Aaron Geisler](http://aarongeisler.com)
 - Design: [Kris Zalameda](https://www.behance.net/Zalamedia)
 
