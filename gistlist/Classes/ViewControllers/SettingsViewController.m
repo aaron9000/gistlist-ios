@@ -13,10 +13,11 @@
 #import "Extensions.h"
 #import "SettingsViewController.h"
 #import "Helpers.h"
+#import "GithubService.h"
 #import "AppService.h"
+#import "AppState.h"
 #import "Macros.h"
 #import "Config.h"
-#import "KeychainStorage.h"
 #import "GLTheme.h"
 
 @interface SettingsViewController ()
@@ -97,26 +98,26 @@
 #pragma mark - Button Callbacks
 
 - (void) copyUrl{
-    if ([AppService userIsAuthenticated] == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
     [AnalyticsHelper settingsCopyURL];
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    NSString* absUrl = [AppService gistUrl].absoluteString;
+    NSString* absUrl = AppState.gistUrl.absoluteString;
     pasteboard.string = absUrl;
     [DialogHelper showClipboardToast];
 }
 
 - (void) shareSMS{
-    if ([AppService userIsAuthenticated] == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
     [AnalyticsHelper settingsShareSMS];
     MFMessageComposeViewController *controller = [[MFMessageComposeViewController alloc] init];
     if([MFMessageComposeViewController canSendText] && controller != nil) {
-        NSString* url = [AppService gistUrl].absoluteString;
+        NSString* url = AppState.gistUrl.absoluteString;
         controller.body = url;
         controller.recipients = [NSArray arrayWithObjects:@"", nil];
         controller.messageComposeDelegate = self;
@@ -129,11 +130,11 @@
     NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"MM-dd-yyyy"];
     NSString* dateString = [formatter stringFromDate:[NSDate date]];
-    return [NSString stringWithFormat:@"%@'s TODO (%@)", AppService.username, dateString];
+    return [NSString stringWithFormat:@"%@'s TODO (%@)", AppState.username, dateString];
 }
 
 - (void) shareEmail{
-    if ([AppService userIsAuthenticated] == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
@@ -141,7 +142,7 @@
     MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
     if ([MFMailComposeViewController canSendMail] && mailComposer != nil) {
         mailComposer.mailComposeDelegate = self;
-        NSString* url = [AppService gistUrl].absoluteString;
+        NSString* url = AppState.gistUrl.absoluteString;
         NSString* subject = [self emailSubject];
         [mailComposer setMessageBody:[NSString stringWithFormat:@"<a>%@</a>", url] isHTML:YES];
         [mailComposer setSubject:subject];
@@ -151,13 +152,12 @@
 }
 
 - (void) viewOnGithub{
-    if ([AppService userIsAuthenticated] == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
     [AnalyticsHelper settingsViewOnGithub];
-    NSURL* url = [AppService gistUrl];
-    [[UIApplication sharedApplication] openURL:url];
+    [[UIApplication sharedApplication] openURL:AppState.gistUrl];
 }
 
 - (void) leaveReview{
@@ -165,20 +165,17 @@
 }
 
 - (void) promoteGistList{
-    if ([AppService userIsAuthenticated] == NO){
+    if (GithubService.sharedService.userIsAuthenticated == NO){
         [self showOfflineAlert];
         return;
     }
-    if ([AppService userIsAuthenticated]){
-        if ([KeychainStorage shared] == NO){
-            [[[[AppService createViralGist] withLoadingSpinner] withErrorAlert] subscribeNext:^(id x) {
-                [KeychainStorage setShared:YES];
-                [AnalyticsHelper createViralGist];
-                [DialogHelper showThankYouToast];
-            }];
-        }else{
-            [DialogHelper showThankYouAgainToast];
-        }
+    if (AppState.sharedGist == NO){
+        [[[[AppService.sharedService createViralGist] withLoadingSpinner] withErrorAlert] subscribeNext:^(id x) {
+            [AnalyticsHelper createViralGist];
+            [DialogHelper showThankYouToast];
+        }];
+    }else{
+        [DialogHelper showThankYouAgainToast];
     }
 }
 
@@ -192,9 +189,11 @@
 }
 
 - (void) signOut{
-    [AnalyticsHelper settingsSignOut];
-    [AppService signOut];
-    [self popToRootViewController];
+    [[AppService.sharedService signOut] subscribeNext:^(id x) {
+        [AnalyticsHelper settingsSignOut];
+        [self popToRootViewController];
+    }];
+    
 }
 
 - (void) dismiss{
@@ -202,8 +201,8 @@
 }
 
 - (void) showOfflineAlert{
-    [AnalyticsHelper settingsFeatureUnavailable];
     [[DialogHelper showSyncRequiredAlert] subscribeNext:^(id x) {
+        [AnalyticsHelper settingsFeatureUnavailable];
     }];
 }
 
@@ -216,7 +215,7 @@
     }];
 }
 
-- (void) setup{
+- (void) setup{ 
     
     // Locals
     const float padding = 15.0f;
@@ -232,14 +231,14 @@
     }];
     
     // Profile
-    NSString* pictureUrl = AppService.userImageUrl;
+    NSString* pictureUrl = AppState.userImageUrl;
     CGRect profileFrame = CGRectMake(padding, 55.0f, profileSize, profileSize);
     _profileImage = [[UIImageView alloc] initWithFrame:profileFrame];
     _profileImage.clipsToBounds = YES;
     _profileImage.layer.cornerRadius = profileFrame.size.width * 0.5f;
     _profileImage.alpha = 0.0f;
     _profileImage.backgroundColor = [GLTheme buttonColorGreen];
-    if ([AppService userIsAuthenticated]){
+    if (GithubService.sharedService.userIsAuthenticated){
         [[SDWebImageDownloader sharedDownloader] downloadImageWithURL:[NSURL URLWithString:pictureUrl]
                                                               options:SDWebImageDownloaderUseNSURLCache
                                                              progress:^(NSInteger receivedSize, NSInteger expectedSize) {
@@ -262,7 +261,7 @@
     float usernameX = padding * 2.0f + profileSize;
     float usernameWidth = 230.0f;
     _usernameLabel = [[UILabel alloc] initWithFrame:CGRectMake(usernameX, 47.0f, usernameWidth , 26.0f)];
-    _usernameLabel.text = AppService.username;
+    _usernameLabel.text = AppState.username;
     _usernameLabel.font = [UIFont fontWithName:FONT size:20];
     _usernameLabel.textColor = [GLTheme textColorDefault];
     _usernameLabel.textAlignment = NSTextAlignmentLeft;
@@ -281,7 +280,7 @@
     float starTextX = usernameX + 12 + padding;
     CGRect starTextFrame = CGRectMake(starTextX, starLineY, 200.0f, 18);
     _starText = [[UILabel alloc] initWithFrame:starTextFrame];
-    _starText.text = [NSString stringWithFormat:@"%i tasks completed", (int)[KeychainStorage stars]];
+    _starText.text = [NSString stringWithFormat:@"%i tasks completed", (int)AppState.completedTasks];
     _starText.font = [UIFont fontWithName:FONT size:15];
     _starText.textColor = [GLTheme textColorDefault];
     _starText.textAlignment = NSTextAlignmentLeft;
@@ -307,7 +306,7 @@
     
     // Add buttons
     _buttons = [NSMutableArray array];
-    BOOL offline = ![AppService userIsAuthenticated];
+    BOOL offline = !GithubService.sharedService.userIsAuthenticated;
     [[self addButtonWithTitle:@"View on GitHub" isLast:NO isGray:offline] subscribeNext:^(id x) {
         [self viewOnGithub];
     }];

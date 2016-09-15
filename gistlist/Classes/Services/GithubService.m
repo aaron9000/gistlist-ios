@@ -1,21 +1,13 @@
-//
-//  GitHubService.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/12/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
 
 #import <CocoaLumberjack.h>
 #import <ObjectiveSugar.h>
 #import <AFNetworking.h>
-#import "TaskList.h"
 #import "MarkdownHelper.h"
 #import "GithubService.h"
 #import "KeychainStorage.h"
-#import "TokensAndKeys.h"
-#import "OCTClient+FetchDatedGist.h"
+#import "Config.h"
 #import "Errors.h"
+#import "Extensions.h"
 
 @implementation GithubService
 
@@ -23,37 +15,39 @@
 
 #define GITHUB_SCOPES OCTClientAuthorizationScopesUser | OCTClientAuthorizationScopesGist | OCTClientAuthorizationScopesRepository
 
-#pragma mark - State
-
-static OCTClient* _client;
-static NSString* _cachedLogin;
-
-#pragma mark - Initialization
-
-+ (void) initialize{
-    [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
-    _client = nil;
-    _cachedLogin = nil;
++ (instancetype)sharedService
+{
+    static GithubService *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[GithubService alloc] init];
+        [OCTClient setClientID:GITHUB_CLIENT_ID clientSecret:GITHUB_CLIENT_SECRET];
+    });
+    return sharedInstance;
 }
 
 #pragma mark - Public
 
-+ (BOOL) userIsAuthenticated{
+- (BOOL) userIsAuthenticated{
     return (BOOL)(_client != nil && [_client isAuthenticated]);
 }
 
-+ (BOOL) authenticateWithStoredCredentials{
+- (RACSignal*) authenticateWithStoredCredentials{
     NSString* savedToken = [KeychainStorage token];
     NSString* savedUserLogin = [KeychainStorage userLogin];
     if (savedToken.length > 0 && savedUserLogin.length > 0){
         OCTUser* user = [OCTUser userWithRawLogin:savedUserLogin server:OCTServer.dotComServer];
         _client = [OCTClient authenticatedClientWithUser:user token:savedToken];
-        _cachedLogin = savedUserLogin;
     }
-    return [_client isAuthenticated];
+    if (_client.isAuthenticated){
+        return [RACSignal return:@(YES)];
+    }else{
+        DDLogError(@"failed to auth with stored credentials");
+        return [RACSignal error:Errors.authFailure];
+    }
 }
 
-+ (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth{
+- (RACSignal*) authenticateUsername:(NSString*) user withPassword:(NSString*) password withAuth:(NSString*) auth{
     if ([_client isAuthenticated]){
         return [RACSignal error:Errors.alreadyAuthenticated];
     }
@@ -63,11 +57,10 @@ static NSString* _cachedLogin;
     return [[signal deliverOn:RACScheduler.mainThreadScheduler] doNext:^(OCTClient* authenticatedClient) {
         _client = authenticatedClient;
         [KeychainStorage setToken:_client.token userLogin:_client.user.rawLogin];
-        _cachedLogin = [KeychainStorage userLogin];
     }];
 }
 
-+ (RACSignal*) createViralGist{
+- (RACSignal*) createViralGist{
     
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
     gistFileEdit.filename = [MarkdownHelper viralFilename];
@@ -83,7 +76,7 @@ static NSString* _cachedLogin;
 }
 
 
-+ (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username{
+- (RACSignal*) createGistWithContent:(NSString*) content username:(NSString*) username{
     
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
     gistFileEdit.filename = [MarkdownHelper filenameForTodaysDate];
@@ -98,7 +91,7 @@ static NSString* _cachedLogin;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username{
+- (RACSignal*) updateGist:(OCTGist*) gist withContent:(NSString*) content username:(NSString*) username{
     
     NSString* filename = [gist.files.allKeys firstObject];
     OCTGistFileEdit* gistFileEdit = [[OCTGistFileEdit alloc] init];
@@ -113,7 +106,7 @@ static NSString* _cachedLogin;
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveGistWithRawUrl:(NSURL*) url{
+- (RACSignal*) retrieveGistContentFromUrl:(NSURL*) url{
     return [RACSignal createSignal:^RACDisposable *(id <RACSubscriber> subscriber) {
         NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
         NSOperationQueue *queue = [NSOperationQueue mainQueue];
@@ -135,37 +128,37 @@ static NSString* _cachedLogin;
     }];
 }
 
-+ (RACSignal*) retrieveUserInfo{
+- (RACSignal*) retrieveUserMetadata{
     RACSignal *request = [_client fetchUserInfo];
     return [request deliverOn:RACScheduler.mainThreadScheduler];
 }
 
-+ (RACSignal*) retrieveGistsSince:(NSDate*) since{
+- (RACSignal*) retrieveMostRecentGistSince:(NSDate*) since{
     RACSignal *request = [_client fetchGistsUpdatedSince:since];
     return [[[request collect] map:^id(NSArray* gists) {
-        return [self filterGists:gists];
+        return [self filterGists:gists].first;
     }] deliverOn:RACScheduler.mainThreadScheduler];
 }
 
 #pragma mark - Helpers
 
-+ (void) invalidateCachedLogin{
+- (RACSignal*) invalidateCachedLogin{
     [KeychainStorage setToken:@"" userLogin:@""];
     _client = nil;
-    _cachedLogin = nil;
+    return [RACSignal return:@(YES)];
 }
 
-+ (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
-    NSArray* filenames = [[gist files] allKeys];
+- (BOOL) containsFilenameOfInterest:(OCTGist*) gist{
+    NSArray* filenames = gist.files.allKeys;
     NSArray* filteredFilenames = [filenames select:^BOOL(NSString* filename) {
-        BOOL containsFileKey = [[filename lowercaseString] containsString:[[MarkdownHelper filenameKey] lowercaseString]];
-        BOOL containsViralKey = [filename containsString:[MarkdownHelper viralFilename]];
+        BOOL containsFileKey = [filename.lowercaseString containsString:MarkdownHelper.filenameKey.lowercaseString];
+        BOOL containsViralKey = [filename containsString:MarkdownHelper.viralFilename];
         return containsFileKey && !containsViralKey;
     }];
     return filteredFilenames.count > 0;
 }
 
-+ (NSMutableArray*) filterGists:(NSArray*) gists{
+- (NSMutableArray*) filterGists:(NSArray*) gists{
     
     // Keep only Gists with a relevant filename
     NSArray* filteredGists = [gists select:^BOOL(OCTGist* gist) {
@@ -176,8 +169,6 @@ static NSString* _cachedLogin;
     NSMutableArray* mutableFilteredGists = [NSMutableArray arrayWithArray:filteredGists];
     NSSortDescriptor* sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO];
     [mutableFilteredGists sortUsingDescriptors:@[sortByDate]];
-    
-    // Return sorted and filtered list
     return mutableFilteredGists;
 }
 

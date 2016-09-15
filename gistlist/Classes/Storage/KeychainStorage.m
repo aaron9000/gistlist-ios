@@ -15,39 +15,21 @@
 #define kGLTokenService @"GistListTokenServiceKey"
 #define kGLUserLoginService @"GistListUserLoginServiceKey"
 #define kGLUserStarsServiceKey @"GistListUserStarsServiceKey"
-#define kGLShareServiceKey @"GistListShareServiceKey"
 #define kGLAccount @"GistListAccountKey"
 
-+ (BOOL) shared{
-    NSString* shareString = [SSKeychain passwordForService:kGLShareServiceKey account:kGLAccount];
-    if (shareString.length == 0){
-        DDLogError(@"'share' not found in keychain");
-        return NO;
-    }
-    int intValue = shareString.intValue;
-    return intValue > 0;
-}
-
-+ (void) setShared:(BOOL) shared{
-    BOOL saveShared = [SSKeychain setPassword:[NSString stringWithFormat:@"%i", shared ? 1 : 0] forService:kGLShareServiceKey account:kGLAccount];
-    if (!saveShared){
-        DDLogError(@"failed to save 'share' in keychain");
-    }
-}
-
-+ (NSInteger) stars{
-    NSString* starsString = [SSKeychain passwordForService:kGLUserStarsServiceKey account:kGLAccount];
-    if (starsString.length == 0){
++ (NSInteger) completedTasks{
+    NSString* completedTasksString = [SSKeychain passwordForService:kGLUserStarsServiceKey account:kGLAccount];
+    if (completedTasksString.length == 0){
         DDLogError(@"stars not found in KeyChain");
         return 0;
     }
-    return starsString.intValue;
+    return completedTasksString.intValue;
 }
 
-+ (void) setStars:(NSInteger) stars{
-    BOOL saveStars = [SSKeychain setPassword:[NSString stringWithFormat:@"%i", (int)stars] forService:kGLUserStarsServiceKey account:kGLAccount];
-    if (!saveStars){
-        DDLogError(@"failed to save 'stars' in keychain");
++ (void) setCompletedTasks:(NSInteger) completedTasks{
+    BOOL save = [SSKeychain setPassword:[NSString stringWithFormat:@"%i", (int)completedTasks] forService:kGLUserStarsServiceKey account:kGLAccount];
+    if (!save){
+        DDLogError(@"failed to save completed tasks in keychain");
     }
 }
 
@@ -73,6 +55,11 @@
     if (!saveToken || !saveUserLogin){
         DDLogError(@"failed to save 'token' / 'userLogin' in keychain");
     }
+}
+
++ (void) resetKeychainData{
+    [self setToken:@"" userLogin:@""];
+    [self setCompletedTasks:0];
 }
 
 @end

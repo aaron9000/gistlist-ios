@@ -7,11 +7,13 @@
 //
 
 #import <SVProgressHUD.h>
+#import "AppState.h"
 #import "AppDelegate.h"
 #import "MainMenuViewController.h"
 #import "TasksViewController.h"
 #import "LoginViewController.h"
 #import "AppService.h"
+#import "GithubService.h"
 #import "Helpers.h"
 #import "Macros.h"
 #import "Extensions.h"
@@ -28,13 +30,12 @@
 }
 
 - (void) showLogin{
-    LoginViewController* login = [[LoginViewController alloc] init];
-    [self pushViewController:login];
+    [self pushViewController:[[LoginViewController alloc] init]];
 }
 
 - (void) useOffline{
     [AnalyticsHelper mainMenuOffline];
-    [[AppService startOfflineSession] subscribeNext:^(id x) {
+    [[AppService.sharedService startOfflineSession] subscribeNext:^(id x) {
         [self showTasks];
     }];
 }
@@ -46,27 +47,26 @@
 
 - (void) attemptLoginWithStoredCreds{
     AppDelegate* appDelegate = (AppDelegate*)UIApplication.sharedApplication.delegate;
-    if ([AppService userIsAuthenticated]){
+    if (GithubService.sharedService.userIsAuthenticated){
         [appDelegate registerAndScheduleNotifications];
         [self showTasks];
         return;
     }
     
-    RACSignal* signal = [AppService hasStoredCreds] ?
-    [[AppService startSessionAndSyncWithStoredCreds] withLoadingSpinner] :
-    [AppService startSessionAndSyncWithStoredCreds];
-    [signal subscribeNext:^(id x) {
-        [appDelegate registerAndScheduleNotifications];
-        [self showTasks];
-    } error:^(NSError *error) {
+    if (AppState.hasStoredCreds){
+        [[[AppService.sharedService startOnlineSessionWithStoredCreds] withLoadingSpinner] subscribeNext:^(NSNumber* completedTasks) {
+            [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
+            [appDelegate registerAndScheduleNotifications];
+            [self showTasks];
+        }];
+    }else{
         [NSObject performBlock:^{
             [appDelegate registerAndScheduleNotifications];
         } afterDelay:1.0f];
-    }];
+    }
 }
 
 - (void) setup{
-    
     UIView* containerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, 400)];
     float padding = [self verticalPadding];
     

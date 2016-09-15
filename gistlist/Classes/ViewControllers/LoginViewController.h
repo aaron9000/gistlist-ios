@@ -9,6 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "BaseViewController.h"
 
+typedef NS_ENUM(NSInteger, LoginInterfaceState) {
+    LoginInterfaceStateCredentials,
+    LoginInterfaceStateTwoFactor
+};
+
 @interface LoginViewController : BaseViewController <UITextFieldDelegate>{
     UIButton* _closeButton;
     UIButton* _verifyButton;
@@ -23,7 +28,8 @@
     UIImageView* _authLogo;
     UIImageView* _loginLogo;
     UITapGestureRecognizer* _tap;
-    BOOL _showingLogin;
+    
+    LoginInterfaceState _state;
 }
 
 @end

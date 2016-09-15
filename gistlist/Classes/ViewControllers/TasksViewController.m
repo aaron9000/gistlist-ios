@@ -1,19 +1,11 @@
-//
-//  TasksViewController.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/13/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import <SVProgressHUD.h>
 #import <CocoaLumberjack.h>
 #import "TasksViewController.h"
 #import "SettingsViewController.h"
 #import "Helpers.h"
+#import "AppState.h"
 #import "Config.h"
 #import "Extensions.h"
-#import "LocalStorage.h"
 #import "AppService.h"
 #import "TaskCell.h"
 #import "GLTheme.h"
@@ -110,17 +102,17 @@ typedef enum InterfaceState {
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    return [AppService taskCount];
+    return AppState.taskCount;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    Task* task = [AppService taskAtIndex:indexPath.row];
+    Task* task = [AppState taskAtIndex:indexPath.row];
     TaskCell* taskCell = (TaskCell*)[collectionView dequeueReusableCellWithReuseIdentifier:kCellIdentifier forIndexPath:indexPath];
     if (!taskCell){
         taskCell = [[TaskCell alloc] init];
     }
-    [taskCell refreshWithData:task withIndex:(int)indexPath.row isEditMode:_isEditMode isLastItem:indexPath.row == AppService.taskCount - 1];
+    [taskCell refreshWithData:task withIndex:(int)indexPath.row isEditMode:_isEditMode isLastItem:indexPath.row == AppState.taskCount - 1];
     [taskCell.toggleButton addTarget:self action:@selector(taskClick:) forControlEvents:UIControlEventTouchUpInside];
     taskCell.taskTextField.delegate = self;
     return taskCell;
@@ -206,18 +198,18 @@ typedef enum InterfaceState {
 }
 
 - (void) updateTask:(NSInteger) index withText:(NSString*) newText{
-    [[AppService updateTask:index withText:newText] subscribeNext:^(id x) {
+    [[AppService.sharedService updateTask:index withText:newText] subscribeNext:^(id x) {
     }];
     [self updateInterface];
     [AnalyticsHelper taskModify];
 }
 
 - (void) deleteTask:(NSInteger) index{
-    Task* task = [AppService taskAtIndex:index];
+    Task* task = [AppState taskAtIndex:index];
     if (task.completed){
         [DialogHelper showClearsDailyToast];
     }
-    [[AppService deleteTask:index] subscribeNext:^(id x) {
+    [[AppService.sharedService deleteTask:index] subscribeNext:^(id x) {
     }];
     [_collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]]];
     [self updateInterface];
@@ -225,14 +217,14 @@ typedef enum InterfaceState {
 }
 
 - (void) toggleTask:(NSInteger) index{
-    [[AppService toggleTask:index] subscribeNext:^(id x) {
+    [[AppService.sharedService toggleTask:index] subscribeNext:^(id x) {
     }];
     [self refreshTaskListCells];
     [AnalyticsHelper taskToggle];
 }
 
 - (void) addNewTaskWithText:(NSString*) text{
-    [[AppService addNewTaskWithText:text] subscribeNext:^(id x) {
+    [[AppService.sharedService addNewTaskWithText:text] subscribeNext:^(id x) {
     }];
     [_collectionView setContentOffset:CGPointZero animated:NO];
     [_collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]]];
@@ -242,14 +234,14 @@ typedef enum InterfaceState {
 
 #pragma mark - Interface Helpers
 
+- (void) syncWithAppState{
+    [_collectionView reloadData];
+    [self updateInterface];
+}
+
 - (void) updateInterface{
     [self updateButtons];
     [self refreshTaskListCells];
-}
-
-- (void) refreshWithLatestDataAndUpdateInterface{
-    [_collectionView reloadData];
-    [self updateInterface];
 }
 
 - (void) setButtonsEnabled:(BOOL) enabled{
@@ -269,10 +261,8 @@ typedef enum InterfaceState {
 }
 
 - (void) dismissListKeyboard{
-    NSInteger len = AppService.taskCount;
-    TaskCell* cell = nil;
-    for (int i = 0; i < len; i++) {
-        cell = (TaskCell*)[_collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
+    for (int i = 0; i < AppState.taskCount; i++) {
+        TaskCell* cell = (TaskCell*)[_collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
         [cell dismissKeyboard];
     }
 }
@@ -580,12 +570,10 @@ typedef enum InterfaceState {
 }
 
 - (void) refreshTaskListCells{
-    NSInteger len = [AppService taskCount];
-    TaskCell* cell = nil;
-    Task* task = nil;
+    int len = AppState.taskCount;
     for (int i = 0; i < len; i++) {
-        task = [AppService taskAtIndex:i];
-        cell = (TaskCell*)[_collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
+        Task* task = [AppState taskAtIndex:i];
+        TaskCell* cell = (TaskCell*)[_collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
         [cell refreshWithData:task withIndex:i isEditMode:_isEditMode isLastItem:(i == len - 1)];
     }
 }
@@ -603,18 +591,15 @@ typedef enum InterfaceState {
 #pragma mark - Tutorial
 
 - (void) attemptStartTutorial{
-    LocalData* localData = [LocalStorage localData];
-    if (localData.showedTutorial || AppService.taskCount > 0){
-        return;
-    }
-    localData.showedTutorial = YES;
-    [LocalStorage setLocalData:localData];
-    [self setButtonsEnabled:NO];
-    [NSObject performBlock:^{
+    [[AppService.sharedService startTutorialWithDelay] subscribeNext:^(NSNumber* shouldPlay) {
+        if (!shouldPlay.boolValue){
+            return;
+        }
+        [self setButtonsEnabled:NO];
         [[DialogHelper showWelcomeAlert] subscribeNext:^(id x) {
             [self startTutorialSequence];
         }];
-    } afterDelay:0.5f];
+    }];
 }
 
 - (void) startTutorialSequence{
@@ -636,16 +621,16 @@ typedef enum InterfaceState {
 - (void) viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    _refreshOnAppear = YES;
+    _syncOnViewWillAppear = YES;
 }
 
 - (void) viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
-    if (_refreshOnAppear){
-        _refreshOnAppear = NO;
-        [self refreshWithLatestDataAndUpdateInterface];
+    if (_syncOnViewWillAppear){
+        _syncOnViewWillAppear = NO;
+        [self syncWithAppState];
     }
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshWithLatestDataAndUpdateInterface) name:kGLEventSyncComplete object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(syncWithAppState) name:kGLEventSyncComplete object:nil];
 }
 
 - (void) setup{
@@ -653,7 +638,7 @@ typedef enum InterfaceState {
     [self setupHeader];
     [self setupActionButton];
     [self setupGestures];
-    [self refreshWithLatestDataAndUpdateInterface];
+    [self syncWithAppState];
     [self attemptStartTutorial];
 }
 

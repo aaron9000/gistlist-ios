@@ -1,12 +1,5 @@
-//
-//  GLTaskList.m
-//  ios-base
-//
-//  Created by Aaron Geisler on 3/14/14.
-//  Copyright (c) 2014 Aaron Geisler. All rights reserved.
-//
-
 #import <ObjectiveSugar.h>
+#import "Helpers.h"
 #import "TaskList.h"
 
 @implementation TaskList
@@ -24,27 +17,21 @@
 
 + (TaskList*) taskListForContent:(NSString*) content lastUpdated:(NSDate*) lastUpdated{
     NSArray* lines = [content split:@"\n"];
-    NSMutableArray* tasks = [NSMutableArray array];
-    for (NSString* line in lines) {
-        Task* task = [Task taskFromLine:line];
-        if (task){
-            [tasks addObject:task];
-        }
-    }
+    NSArray* tasks = [lines map:^id(NSString* line) {
+        return [Task taskFromLine:line];
+    }];
     return [[TaskList alloc] initWithTasks:tasks lastUpdated:lastUpdated];
 }
 
 + (TaskList*) newTaskListFromOldTaskList:(TaskList*) oldTaskList{
-    NSArray* incompleteTasks = [[oldTaskList.tasks select:^BOOL(Task* task) {
+    NSArray* incompleteTasks = [oldTaskList.tasks select:^BOOL(Task* task) {
         return !task.completed;
-    }] mutableCopy];
+    }].mutableCopy;
     return [[TaskList alloc] initWithTasks:incompleteTasks lastUpdated:[NSDate date]];
 }
 
 - (BOOL) isEqualToList:(TaskList*) otherList{
-    NSString* otherContent = [otherList contentForTasks];
-    NSString* content = [self contentForTasks];
-    return [otherContent isEqualToString:content];
+    return [otherList.contentForTasks isEqualToString:self.contentForTasks];
 }
 
 - (id) initWithDictionary:(NSDictionary*) dictionary{
@@ -66,19 +53,19 @@
 }
 
 - (NSDictionary*) dictionaryValue{
-    NSArray* taskDictionaries = [_tasks map:^id(id object) {
-        return [object dictionaryValue];
+    NSArray* taskDictionaries = [_tasks map:^id(Task* task) {
+        return task.dictionaryValue;
     }];
     return @{
                 kTasks: taskDictionaries,
                 kLastUpdated: _lastUpdated
-             };
+            };
 }
 
 - (id) initWithTasks:(NSArray*) tasks lastUpdated:(NSDate*) lastUpdated{
     self = [super init];
     if (self){
-        _tasks = [tasks mutableCopy];
+        _tasks = tasks.mutableCopy;
         _lastUpdated = lastUpdated;
     }
     return self;
@@ -87,8 +74,8 @@
 - (id) init{
     self = [super init];
     if (self){
-        _tasks = [NSMutableArray array];
-        _lastUpdated = [[NSDate date] dateByAddingTimeInterval:-60.0f * 60.0f * 24.0f * 7.0f];
+        _tasks = NSMutableArray.array;
+        _lastUpdated = DateHelper.oneWeekAgo;
     }
     return self;
 }
@@ -96,7 +83,7 @@
 #pragma mark - Getters
 
 - (Task*) taskAtIndex:(NSInteger) index{
-    return (index < 0 || index >= _tasks.count) ? nil : _tasks[index];
+    return (!_tasks || index < 0 || index >= _tasks.count) ? nil : _tasks[index];
 }
 
 - (NSInteger) completedTaskCount{
@@ -108,19 +95,23 @@
 - (NSString*) contentForTasks{
     NSString* content = @"";
     for (Task* task in _tasks) {
-        content = [content stringByAppendingString:[task stringValue]];
+        content = [content stringByAppendingString:task.stringValue];
     }
     return content;
 }
 
 #pragma mark - Modifying tasks
 
-- (void) addTask:(Task*) task{
+- (BOOL) addTask:(Task*) task{
+    if (!_tasks) {
+        return NO;
+    }
     [_tasks insertObject:task atIndex:0];
+    return YES;
 }
 
 - (BOOL) removeTaskAtIndex:(NSInteger) index{
-    if (index < 0 || index >= _tasks.count) {
+    if (!_tasks || index < 0 || index >= _tasks.count) {
         return NO;
     }
     [_tasks removeObjectAtIndex:index];

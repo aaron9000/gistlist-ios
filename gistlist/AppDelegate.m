@@ -1,27 +1,17 @@
-//
-//  AppDelegate.m
-//  gistlist
-//
-//  Created by Aaron Geisler on 3/28/15.
-//  Copyright (c) 2015 Aaron Geisler. All rights reserved.
-//
 
 #import "AppDelegate.h"
-#import <OCTClient.h>
 #import <iRate.h>
 #import <Crittercism.h>
 #import <Mixpanel.h>
 #import <CocoaLumberjack.h>
 #import <SVProgressHUD.h>
 #import "LandingViewController.h"
+#import "AppState.h"
 #import "AppService.h"
-#import "NotificationHelper.h"
-#import "AnalyticsHelper.h"
-#import "LocalStorage.h"
-#import "InterfaceConsts.h"
-#import "TokensAndKeys.h"
+#import "Helpers.h"
+#import "Config.h"
 #import "GLTheme.h"
-#import "DialogHelper.h"
+#import "Extensions.h"
 
 @interface AppDelegate ()
 
@@ -99,6 +89,10 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    #ifdef TEST
+        return;
+    #endif
+    
     // Thirdparty libraries
     [self setupThirdParty];
     
@@ -112,9 +106,6 @@
     [_window addSubview:vc.view];
     [_window makeKeyAndVisible];
     
-    // Kick things off
-    [AppService start];
-    
     // Handle launching from a notification
     UILocalNotification *localNotification = launchOptions[UIApplicationLaunchOptionsLocalNotificationKey];
     if (localNotification) {
@@ -126,10 +117,16 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    #ifdef TEST
+        return;
+    #endif
+    
     [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
-    RACSignal* sync = [AppService attemptSync];
-    sync = AppService.performedInitialSync ? [sync withLoadingSpinner] : sync;
-    [sync subscribeNext:^(id x) {
+    RACSignal* sync = AppState.performedInitialSync ?
+    [[AppService.sharedService syncIfResuming] withLoadingSpinner] :
+    [AppService.sharedService syncIfResuming];
+    [sync subscribeNext:^(NSNumber* completedTasks) {
+        [DialogHelper attemptShowRewardToast:completedTasks.integerValue];
     } error:^(NSError *error) {
         [DialogHelper showSyncFailedToast];
     }];

@@ -17,13 +17,16 @@ PODS:
   - Mixpanel (2.7.3):
     - Mixpanel/MPCategoryHelpers (= 2.7.3)
   - Mixpanel/MPCategoryHelpers (2.7.3)
+  - Nimble (4.0.1)
   - ObjectiveSugar (1.1.0)
+  - OCMock (3.3.1)
   - OctoKit (0.7.6):
     - AFNetworking (~> 1.3.3)
     - ISO8601DateFormatter (~> 0.7.0)
     - Mantle (~> 1.3.1)
     - ReactiveCocoa (~> 2.2.2)
   - pop (1.0.7)
+  - Quick (0.9.3)
   - ReactiveCocoa (2.2.4):
     - ReactiveCocoa/Core (= 2.2.4)
     - ReactiveCocoa/no-arc (= 2.2.4)
@@ -43,25 +46,24 @@ DEPENDENCIES:
   - CocoaLumberjack
   - CrittercismSDK
   - iRate (~> 1.11)
+  - ISO8601DateFormatter (~> 0.7)
   - Mixpanel
+  - Nimble (~> 4.0.0)
   - ObjectiveSugar
-  - OctoKit (from `https://github.com/octokit/octokit.objc.git`, tag `0.7.6`)
+  - OCMock
+  - OctoKit (from `Octokit.podspec.json`)
+  - Quick (~> 0.9)
   - SDWebImage (~> 3.7)
   - SSKeychain
   - SVProgressHUD (~> 1.1)
-  - VBFPopFlatButton (from `https://github.com/aaron9000/VBFPopFlatButton.git`, tag
-    `0.0.7`)
+  - VBFPopFlatButton (from `VBFPopFlatButton.podspec.json`)
   - WTAHelpers/WTAFrameHelpers (from `git@github.com:willowtreeapps/WTAHelpers.git`)
 
 EXTERNAL SOURCES:
   OctoKit:
-    :git: https://github.com/octokit/octokit.objc.git
     :podspec: Octokit.podspec.json
-    :tag: 0.7.6
   VBFPopFlatButton:
-    :git: https://github.com/aaron9000/VBFPopFlatButton.git
     :podspec: VBFPopFlatButton.podspec.json
-    :tag: 0.0.7
   WTAHelpers:
     :git: git@github.com:willowtreeapps/WTAHelpers.git
 
@@ -78,9 +80,12 @@ SPEC CHECKSUMS:
   ISO8601DateFormatter: ab926648eebe497f4d167c0fd083992f959f1274
   Mantle: a516570b84c3cefb34b02647a6588a087dddc490
   Mixpanel: 1d387d76800e07e953958c62c97fea27f13632dd
+  Nimble: 0f3c8b8b084cda391209c3c5efbb48bedeeb920a
   ObjectiveSugar: a6a25f23d657c19df0a0b972466d5b5ca9f5295c
+  OCMock: f3f61e6eaa16038c30caa5798c5e49d3307b6f22
   OctoKit: 67912e0ff91d4cf0f1b777050791495db7fa2d6a
   pop: 628ffc631644601567ee8bfaaaea493ebd7d0923
+  Quick: 13a2a2b19a5d8e3ed4fd0c36ee46597fd77ebf71
   ReactiveCocoa: 78d9d1057f6e2595a67285b5adb0c90d0fc2237c
   SDWebImage: 71b7cdc1d1721d6a82ed62889030225f2c249e29
   SSKeychain: 88767e903ee8d274ed380e364d96b7a101235286
@@ -88,4 +93,6 @@ SPEC CHECKSUMS:
   VBFPopFlatButton: c764adf7a5e16a862c6644c7d6f876e030855387
   WTAHelpers: 293d44201fe3fac419d3f096e927faed3f74f432
 
-COCOAPODS: 0.36.3
+PODFILE CHECKSUM: 3641bbd416b991715e16b41d8310c111231a6092
+
+COCOAPODS: 1.0.1

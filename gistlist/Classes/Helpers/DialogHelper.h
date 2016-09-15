@@ -8,11 +8,12 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <ReactiveCocoa.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 
 @interface DialogHelper : NSObject
 
 // Toasts
++ (void) attemptShowRewardToast:(int) tasks;
 + (void) showThankYouToast;
 + (void) showThankYouAgainToast;
 + (void) showTaskCompletionToast:(NSInteger) stars;
@@ -24,8 +25,7 @@
 + (RACSignal*) showWelcomeAlert;
 + (RACSignal*) showLogoutConfirmationAlert;
 + (RACSignal*) showSyncRequiredAlert;
-+ (RACSignal*) showLoginErrorAlert;
-+ (RACSignal*) showAuthErrorAlert;
++ (RACSignal*) showTwoFactorErrorAlert;
 + (RACSignal*) showCredentialsErrorAlert;
 + (RACSignal*) showOKErrorAlert:(NSError *)error;
 
