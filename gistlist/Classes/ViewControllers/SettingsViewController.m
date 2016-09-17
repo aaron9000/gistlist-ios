@@ -160,6 +160,11 @@
     [[UIApplication sharedApplication] openURL:AppState.gistUrl];
 }
 
+- (void) viewSourceCode{
+    [AnalyticsHelper settingsViewSource];
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:SOURCE_CODE_URL]];
+}
+
 - (void) leaveReview{
     [[iRate sharedInstance] openRatingsPageInAppStore];
 }
@@ -235,7 +240,7 @@
     CGRect profileFrame = CGRectMake(padding, 55.0f, profileSize, profileSize);
     _profileImage = [[UIImageView alloc] initWithFrame:profileFrame];
     _profileImage.clipsToBounds = YES;
-    _profileImage.layer.cornerRadius = profileFrame.size.width * 0.5f;
+    _profileImage.layer.cornerRadius = profileFrame.size.width * 0.1f;
     _profileImage.alpha = 0.0f;
     _profileImage.backgroundColor = [GLTheme buttonColorGreen];
     if (GithubService.sharedService.userIsAuthenticated){
@@ -290,12 +295,12 @@
 
     // Version label
     NSString * version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-    CGRect versionFrame = CGRectMake(0, SCREEN_WIDTH - 13, SCREEN_WIDTH, 12);
+    CGRect versionFrame = CGRectMake(0, SCREEN_HEIGHT - 13, SCREEN_WIDTH, 12);
     _versionLabel = [[UILabel alloc] initWithFrame:versionFrame];
     _versionLabel.text = [NSString stringWithFormat:@"v %@", version];
     _versionLabel.font = [UIFont fontWithName:FONT size:8];
     _versionLabel.textColor = [GLTheme textColorDefault];
-    _versionLabel.alpha = 0.25f;
+    _versionLabel.alpha = 0.5f;
     _versionLabel.textAlignment = NSTextAlignmentCenter;
     _versionLabel.backgroundColor = [UIColor clearColor];
     _versionLabel.contentMode = UIViewContentModeCenter;
@@ -307,7 +312,7 @@
     // Add buttons
     _buttons = [NSMutableArray array];
     BOOL offline = !GithubService.sharedService.userIsAuthenticated;
-    [[self addButtonWithTitle:@"View on GitHub" isLast:NO isGray:offline] subscribeNext:^(id x) {
+    [[self addButtonWithTitle:@"View Tasks on GitHub" isLast:NO isGray:offline] subscribeNext:^(id x) {
         [self viewOnGithub];
     }];
     [[self addButtonWithTitle:@"Share - Copy URL" isLast:NO isGray:offline] subscribeNext:^(id x) {
@@ -321,6 +326,9 @@
     }];
     [[self addButtonWithTitle:@"Promote on GitHub" isLast:NO isGray:offline] subscribeNext:^(id x) {
         [self promoteGistList];
+    }];
+    [[self addButtonWithTitle:@"View Source Code" isLast:NO isGray:offline] subscribeNext:^(id x) {
+        [self viewSourceCode];
     }];
     [[self addButtonWithTitle:@"Leave a Review" isLast:NO isGray:NO] subscribeNext:^(id x) {
         [self leaveReview];
