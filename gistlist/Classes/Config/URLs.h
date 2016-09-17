@@ -7,4 +7,5 @@
 #define STORE_URL @"http://itunes.com/apps/apptivus/gistlist"
 #define GITHUB_URL @"https://github.com/join"
 #define GIST_URL @"http://gist.github.com/"
+#define SOURCE_CODE_URL @"http://github.com/aaron9000/gistlist-ios"
 

@@ -1,9 +1,9 @@
 #import <Foundation/Foundation.h>
 
-#warning You will need to replace these with your own values
+#warning ADD YOUR KEYS HERE
 
-#define GITHUB_CLIENT_ID @"ADD_YOUR_OWN"
-#define GITHUB_CLIENT_SECRET @"ADD_YOUR_OWN"
-#define CRITTERCISM_TOKEN @"ADD_YOUR_OWN"
-#define MIXPANEL_TOKEN @"ADD_YOUR_OWN"
-#define APP_STORE_ID 111111111
+#define GITHUB_CLIENT_ID @"ADD_ME"
+#define GITHUB_CLIENT_SECRET @"ADD_ME"
+#define CRITTERCISM_TOKEN @"ADD_ME"
+#define MIXPANEL_TOKEN @"ADD_ME"
+#define APP_STORE_ID 0

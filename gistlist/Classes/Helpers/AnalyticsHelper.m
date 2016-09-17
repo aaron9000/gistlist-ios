@@ -67,6 +67,11 @@
     [[Mixpanel sharedInstance] track:@"Settings - View on Github"];
 }
 
++ (void) settingsViewSource{
+    [[Mixpanel sharedInstance] track:@"Settings - View Source"];
+}
+
+
 + (void) settingsLeaveReview{
     [[Mixpanel sharedInstance] track:@"Settings - Leave Review"];
 }

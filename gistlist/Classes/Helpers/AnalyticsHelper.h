@@ -27,6 +27,7 @@
 + (void) settingsShareEmailSuccess;
 + (void) settingsShareSMSSuccess;
 + (void) settingsViewOnGithub;
++ (void) settingsViewSource;
 + (void) settingsLeaveReview;
 + (void) settingsMoreApps;
 + (void) settingsCredits;

@@ -57,6 +57,7 @@
     OCMStub([ghServiceMock userIsAuthenticated]).andReturn(YES);
     OCMStub([ghServiceMock createGistWithContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:gist]);
     OCMStub([ghServiceMock retrieveMostRecentGistSince:OCMArg.any]).andReturn([RACSignal return:remoteGistToReturn]);
+    OCMStub([ghServiceMock retrieveUserMetadata]).andReturn([RACSignal return:nil]);
     OCMStub([ghServiceMock authenticateWithStoredCredentials]).andReturn([RACSignal return:@(YES)]);
     OCMStub([ghServiceMock updateGist:OCMArg.any withContent:OCMArg.any username:OCMArg.any]).andReturn([RACSignal return:@(YES)]);
     OCMStub([ghServiceMock retrieveGistContentFromUrl:OCMArg.any]).andReturn([RACSignal return:remoteTaskList.contentForTasks]);

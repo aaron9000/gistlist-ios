@@ -188,7 +188,7 @@
 #pragma mark - Misc helpers
 
 - (RACSignal*) cacheUserMetadata{
-    if (!AppState.username.length || !AppState.userImageUrl.length){
+    if (AppState.username.length && AppState.userImageUrl.length){
         return [RACSignal return:@(YES)];
     }
     return [[[GithubService.sharedService retrieveUserMetadata] doNext:^(OCTUser* userInfo) {
