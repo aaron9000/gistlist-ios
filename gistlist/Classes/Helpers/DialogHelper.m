@@ -16,7 +16,7 @@
 
 #pragma mark - Toasts
 
-+ (void) attemptShowRewardToast:(int) tasks{
++ (void) attemptShowRewardToast:(NSInteger) tasks{
     if (tasks <= 0){
         return;
     }

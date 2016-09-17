@@ -570,7 +570,7 @@ typedef enum InterfaceState {
 }
 
 - (void) refreshTaskListCells{
-    int len = AppState.taskCount;
+    NSInteger len = AppState.taskCount;
     for (int i = 0; i < len; i++) {
         Task* task = [AppState taskAtIndex:i];
         TaskCell* cell = (TaskCell*)[_collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
