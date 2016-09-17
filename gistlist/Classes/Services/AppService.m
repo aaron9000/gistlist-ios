@@ -283,7 +283,7 @@
     if (AppState.showedTutorial || AppState.taskCount > 0){
         return [RACSignal return:@(NO)];
     }
-    return [[[RACSignal empty] delay:0.5f] flattenMap:^RACStream *(id value) {
+    return [[[RACSignal return:nil] delay:0.5f] flattenMap:^RACStream *(id value) {
         [AppState setShowedTutorial:YES];
         return [RACSignal return:@(YES)];
     }];
