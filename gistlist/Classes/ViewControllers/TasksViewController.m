@@ -595,25 +595,25 @@ typedef enum InterfaceState {
         if (!shouldPlay.boolValue){
             return;
         }
-        [self setButtonsEnabled:NO];
-        [[DialogHelper showWelcomeAlert] subscribeNext:^(id x) {
-            [self startTutorialSequence];
-        }];
+        [self startTutorialSequence];
     }];
 }
 
 - (void) startTutorialSequence{
     [AnalyticsHelper showTutorial];
-    [NSObject performBlock:^{
+    [self setButtonsEnabled:NO];
+    [[[[[DialogHelper showWelcomeAlert] flattenMap:^RACStream *(id value) {
         [self addNewTaskWithText:@"This is your task list."];
-    } afterDelay:0.5f];
-    [NSObject performBlock:^{
+        return [[RACSignal return:nil] delay:0.5f];
+    }] flattenMap:^RACStream *(id value) {
         [self addNewTaskWithText:@"Completed tasks will clear daily."];
-    } afterDelay:1.5f];
-    [NSObject performBlock:^{
+        return [[RACSignal return:nil] delay:0.5f];
+    }] flattenMap:^RACStream *(id value) {
         [self addNewTaskWithText:@"Enjoy!"];
+        return [RACSignal return:@(YES)];
+    }] subscribeNext:^(id x) {
         [self setButtonsEnabled:YES];
-    } afterDelay:2.5f];
+    }];
 }
 
 #pragma mark - ViewController lifecycle
