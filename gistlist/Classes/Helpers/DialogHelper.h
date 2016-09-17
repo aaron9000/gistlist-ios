@@ -13,7 +13,7 @@
 @interface DialogHelper : NSObject
 
 // Toasts
-+ (void) attemptShowRewardToast:(int) tasks;
++ (void) attemptShowRewardToast:(NSInteger) tasks;
 + (void) showThankYouToast;
 + (void) showThankYouAgainToast;
 + (void) showTaskCompletionToast:(NSInteger) stars;

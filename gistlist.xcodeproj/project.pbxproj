@@ -46,7 +46,7 @@
 		A59A452F1B24FAA5009CCD43 /* AppIcon60x60@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A59A452A1B24FAA5009CCD43 /* AppIcon60x60@3x.png */; };
 		A59A45301B24FAA5009CCD43 /* AppIcon76x76@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A59A452B1B24FAA5009CCD43 /* AppIcon76x76@3x.png */; };
 		A59A45311B24FAA5009CCD43 /* iTunesArtwork@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A59A452C1B24FAA5009CCD43 /* iTunesArtwork@3x.png */; };
-		A5A2FB221B1169920066DB9D /* GLTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = A5A2FB211B1169920066DB9D /* GLTheme.m */; };
+		A5A2FB221B1169920066DB9D /* GLTheme.m in Sources */ = {isa = PBXBuildFile; fileRef = A5A2FB211B1169920066DB9D /* GLTheme.m */; settings = {COMPILER_FLAGS = "-w"; }; };
 		A5E580E31B11832D00665A6C /* Default-375w-667h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A5E580DF1B11832D00665A6C /* Default-375w-667h@2x.png */; };
 		A5E580E41B11832D00665A6C /* Default-414w-736h@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A5E580E01B11832D00665A6C /* Default-414w-736h@3x.png */; };
 		A5E580E51B11832D00665A6C /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A5E580E11B11832D00665A6C /* Default-568h@2x.png */; };
